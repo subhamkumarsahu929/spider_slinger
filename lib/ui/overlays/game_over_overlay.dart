@@ -1,0 +1,3 @@
+class GameOverOverlay {
+  void show() {}
+}

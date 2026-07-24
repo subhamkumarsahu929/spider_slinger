@@ -1,0 +1,3 @@
+class MainMenuOverlay {
+  void show() {}
+}
