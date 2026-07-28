@@ -3,8 +3,8 @@ import 'package:flutter/material.dart';
 import 'enemy.dart';
 
 class CrawlerEnemy extends Enemy {
-  CrawlerEnemy({required double speed}) 
-      : super(type: EnemyType.crawler, speed: speed, size: Vector2(48, 32));
+  CrawlerEnemy({required super.speed}) 
+      : super(type: EnemyType.crawler, size: Vector2(48, 32));
 
   @override
   Future<void> onLoad() async {

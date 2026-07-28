@@ -6,11 +6,11 @@ class VirtualButton extends StatelessWidget {
   final Color color;
 
   const VirtualButton({
-    Key? key,
+    super.key,
     required this.icon,
     required this.onPressed,
     this.color = Colors.blue,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -9,8 +9,8 @@ class AirborneEnemy extends Enemy {
   final double hoverFrequency = 3.0;
   final double initialY;
 
-  AirborneEnemy({required double speed, required this.initialY}) 
-      : super(type: EnemyType.airborne, speed: speed, size: Vector2(40, 40));
+  AirborneEnemy({required super.speed, required this.initialY}) 
+      : super(type: EnemyType.airborne, size: Vector2(40, 40));
 
   @override
   Future<void> onLoad() async {

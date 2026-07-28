@@ -6,7 +6,7 @@ import '../../services/audio_service.dart';
 class MainMenuOverlay extends StatelessWidget {
   final SpiderSlingerGame game;
 
-  const MainMenuOverlay({Key? key, required this.game}) : super(key: key);
+  const MainMenuOverlay({super.key, required this.game});
 
   @override
   Widget build(BuildContext context) {

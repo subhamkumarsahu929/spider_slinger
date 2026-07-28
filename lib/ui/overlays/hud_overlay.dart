@@ -10,7 +10,7 @@ import '../widgets/virtual_button.dart';
 class HudOverlay extends StatelessWidget {
   final SpiderSlingerGame game;
 
-  const HudOverlay({Key? key, required this.game}) : super(key: key);
+  const HudOverlay({super.key, required this.game});
 
   @override
   Widget build(BuildContext context) {

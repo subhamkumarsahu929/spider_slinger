@@ -4,7 +4,7 @@ class HeartCounter extends StatelessWidget {
   final int lives;
   final int maxLives;
 
-  const HeartCounter({Key? key, required this.lives, required this.maxLives}) : super(key: key);
+  const HeartCounter({super.key, required this.lives, required this.maxLives});
 
   @override
   Widget build(BuildContext context) {

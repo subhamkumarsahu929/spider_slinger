@@ -34,7 +34,7 @@ void main() async {
 }
 
 class SpiderSlingerApp extends StatelessWidget {
-  const SpiderSlingerApp({Key? key}) : super(key: key);
+  const SpiderSlingerApp({super.key});
 
   @override
   Widget build(BuildContext context) {

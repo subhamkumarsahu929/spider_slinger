@@ -10,10 +10,4 @@ class VerticalWeb extends PositionComponent with HasGameRef<SpiderSlingerGame> {
     canvas.drawRect(size.toRect(), Paint()..color = Colors.white);
   }
 
-  @override
-  void update(double dt) {
-    super.update(dt);
-    // If the background moves, this might need to move, or it stays anchored to player x.
-    // For now, it represents a static rope upwards.
-  }
 }

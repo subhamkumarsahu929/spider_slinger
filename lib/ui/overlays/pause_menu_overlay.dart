@@ -5,7 +5,7 @@ import '../../game/spider_slinger_game.dart';
 class PauseMenuOverlay extends StatelessWidget {
   final SpiderSlingerGame game;
 
-  const PauseMenuOverlay({Key? key, required this.game}) : super(key: key);
+  const PauseMenuOverlay({super.key, required this.game});
 
   @override
   Widget build(BuildContext context) {

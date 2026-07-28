@@ -1,11 +1,8 @@
-import 'package:flame/components.dart';
 import 'package:flame/game.dart';
-import 'package:flutter/material.dart';
 import 'state/game_state.dart';
 import 'components/player/player_component.dart';
 import 'components/environment/parallax_bg.dart';
 import 'components/environment/platform_block.dart';
-import 'components/environment/finish_line.dart';
 import 'components/managers/difficulty_manager.dart';
 import 'components/managers/spawner_manager.dart';
 

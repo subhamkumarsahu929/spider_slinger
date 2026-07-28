@@ -7,7 +7,7 @@ import '../../game/state/game_state.dart';
 class GameOverOverlay extends StatelessWidget {
   final SpiderSlingerGame game;
 
-  const GameOverOverlay({Key? key, required this.game}) : super(key: key);
+  const GameOverOverlay({super.key, required this.game});
 
   @override
   Widget build(BuildContext context) {
