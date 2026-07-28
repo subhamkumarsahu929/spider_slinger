@@ -1,3 +1,49 @@
-class MainMenuOverlay {
-  void show() {}
+import 'package:flutter/material.dart';
+import '../../config/game_routes.dart';
+import '../../game/spider_slinger_game.dart';
+import '../../services/audio_service.dart';
+
+class MainMenuOverlay extends StatelessWidget {
+  final SpiderSlingerGame game;
+
+  const MainMenuOverlay({Key? key, required this.game}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.all(32),
+        decoration: BoxDecoration(
+          color: Colors.black.withOpacity(0.8),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'Spider-Slinger:\nInsect Blitz',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontFamily: 'Courier',
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton(
+              onPressed: () {
+                game.overlays.remove(GameRoutes.mainMenu);
+                game.overlays.add(GameRoutes.hud);
+                game.resumeEngine();
+                // We might need to initialize audio here due to browser policies if on web
+                AudioService.initialize();
+              },
+              child: const Text('Start Game', style: TextStyle(fontSize: 24)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
