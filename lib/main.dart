@@ -85,7 +85,7 @@ class _SpiderSlingerAppState extends State<SpiderSlingerApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Spider-Slinger',
+      title: 'Spiderman : Web Slinger',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
