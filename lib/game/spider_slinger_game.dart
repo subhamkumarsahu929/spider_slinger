@@ -5,7 +5,6 @@ import 'components/environment/parallax_bg.dart';
 import 'components/managers/difficulty_manager.dart';
 import 'components/managers/procedural_spawner.dart';
 import 'components/managers/spawner_manager.dart';
-import '../config/game_constants.dart';
 
 class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
   final GameState gameState;
