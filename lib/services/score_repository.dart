@@ -23,7 +23,9 @@ class ScoreRepository {
   final FirebaseFirestore _firestore;
 
   ScoreRepository({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+      : _firestoreOverride = firestore;
+
+  FirebaseFirestore get _firestore => _firestoreOverride ?? FirebaseFirestore.instance;
 
   // ── Submit Score ───────────────────────────────────────────────────────────
   // Called from GameState._triggerGameOver() when the player has a uid.

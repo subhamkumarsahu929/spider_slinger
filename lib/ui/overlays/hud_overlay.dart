@@ -57,24 +57,46 @@ class HudOverlay extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
-                    VirtualButton(
-                      icon: Icons.arrow_upward,
-                      color: Colors.green,
-                      onPressed: game.jump,
-                    ),
-                    Column(
-                      mainAxisSize: MainAxisSize.min,
+                    Row(
                       children: [
                         VirtualButton(
-                          icon: Icons.upload,
-                          color: Colors.blue,
-                          onPressed: game.shootVerticalWeb,
+                          icon: Icons.arrow_back,
+                          color: Colors.orange,
+                          onPointerDown: game.startMovingLeft,
+                          onPointerUp: game.stopMoving,
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(width: 16),
                         VirtualButton(
                           icon: Icons.arrow_forward,
-                          color: Colors.red,
-                          onPressed: game.shootHorizontalWeb,
+                          color: Colors.orange,
+                          onPointerDown: game.startMovingRight,
+                          onPointerUp: game.stopMoving,
+                        ),
+                      ],
+                    ),
+                    Row(
+                      children: [
+                        VirtualButton(
+                          icon: Icons.arrow_upward,
+                          color: Colors.green,
+                          onPressed: game.jump,
+                        ),
+                        const SizedBox(width: 16),
+                        Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            VirtualButton(
+                              icon: Icons.upload,
+                              color: Colors.blue,
+                              onPressed: game.shootVerticalWeb,
+                            ),
+                            const SizedBox(height: 16),
+                            VirtualButton(
+                              icon: Icons.arrow_forward,
+                              color: Colors.red,
+                              onPressed: game.shootHorizontalWeb,
+                            ),
+                          ],
                         ),
                       ],
                     ),
