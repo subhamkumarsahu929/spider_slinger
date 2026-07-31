@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'difficulty_manager.dart';
 import '../enemies/crawler_enemy.dart';
 import '../enemies/airborne_enemy.dart';
+import '../enemies/venom_boss.dart';
 import '../../spider_slinger_game.dart';
 import 'dart:math';
 
@@ -9,6 +10,7 @@ class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
   final DifficultyManager difficultyManager;
   double _timer = 0;
   final Random _random = Random();
+  bool _venomSpawned = false;
 
   SpawnerManager({required this.difficultyManager});
 
@@ -16,6 +18,13 @@ class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
   void update(double dt) {
     super.update(dt);
     if (gameRef.gameState.isGameOver) return;
+
+    if (difficultyManager.currentPhase == 3 && !_venomSpawned) {
+      _venomSpawned = true;
+      gameRef.add(VenomBoss()
+        ..position = Vector2(gameRef.size.x + 100, gameRef.size.y - 150));
+      return; // Give some time before spawning other enemies, or just let them spawn too.
+    }
 
     _timer += dt;
     if (_timer >= difficultyManager.spawnRate) {
@@ -39,7 +48,8 @@ class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
         ..position = Vector2(gameRef.size.x + 50, initialY));
     } else {
       // Spawn on the ground (assuming floor at gameRef.size.y - 100)
-      gameRef.add(CrawlerEnemy(speed: speed)
+      CrawlerType cType = _random.nextBool() ? CrawlerType.little : CrawlerType.tall;
+      gameRef.add(CrawlerEnemy(speed: speed, crawlerType: cType)
         ..position = Vector2(gameRef.size.x + 50, gameRef.size.y - 116)); // 100 floor + 16 half size
     }
   }

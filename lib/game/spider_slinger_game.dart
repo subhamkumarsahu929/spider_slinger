@@ -5,6 +5,7 @@ import 'components/environment/parallax_bg.dart';
 import 'components/environment/platform_block.dart';
 import 'components/managers/difficulty_manager.dart';
 import 'components/managers/spawner_manager.dart';
+import '../config/game_constants.dart';
 
 class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
   final GameState gameState;
@@ -15,6 +16,25 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
   @override
   Future<void> onLoad() async {
     super.onLoad();
+
+    // Pre-cache enemy assets
+    await images.loadAll([
+      'enemies/Little-Enemy/Little-Enemy-Idle-Sheet.png',
+      'enemies/Little-Enemy/Little-Enemy-Walk-Sheet.png',
+      'enemies/Little-Enemy/Little-Enemy-Attack-Sheet.png',
+      'enemies/Little-Enemy/Little-Enemy-Hit-Sheet.png',
+      'enemies/Little-Enemy/Little-Enemy-Death-Sheet.png',
+      'enemies/Tall-Enemy/Tall-Enemy-Idle-Sheet.png',
+      'enemies/Tall-Enemy/Tall-Enemy-Walk-Sheet.png',
+      'enemies/Tall-Enemy/Tall-Enemy-Attack-Sheet.png',
+      'enemies/Tall-Enemy/Tall-Enemy-Hit-Sheet.png',
+      'enemies/Tall-Enemy/Tall-Enemy-Death-Sheet.png',
+      'enemies/Fly-Enemy/Fly-Enemy-Idle-Sheet.png',
+      'enemies/Fly-Enemy/Fly-Enemy-Attack-Sheet.png',
+      'enemies/Fly-Enemy/Fly-Enemy-Hit-Sheet.png',
+      'enemies/Fly-Enemy/Fly-Enemy-Death-Sheet.png',
+      'enemies/Venom.png',
+    ]);
 
     // Background
     add(ParallaxBg());
@@ -29,20 +49,29 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
       ..position = Vector2(100, size.y - 200);
     add(_player);
 
-    // Floor
+    // Floor - Make it much wider since the player can move!
     add(PlatformBlock(
-      position: Vector2(0, size.y - 100),
-      size: Vector2(size.x, 100),
+      position: Vector2(-5000, size.y - 100),
+      size: Vector2(10000, 100),
     ));
 
-    // Finish Line
-    // Placed far to the right, will move towards player if we move the world or player moves.
-    // For simplicity, we could make it spawn based on time or distance.
-    // Let's spawn it at a specific time in DifficultyManager later.
+    camera.follow(_player);
   }
 
   void jump() {
     _player.jump();
+  }
+
+  void startMovingLeft() {
+    _player.horizontalVelocity = -GameConstants.playerSpeed;
+  }
+
+  void startMovingRight() {
+    _player.horizontalVelocity = GameConstants.playerSpeed;
+  }
+
+  void stopMoving() {
+    _player.horizontalVelocity = 0;
   }
 
   void shootHorizontalWeb() {
