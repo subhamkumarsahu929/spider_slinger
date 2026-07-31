@@ -20,7 +20,7 @@ import '../models/user_score_model.dart';
 class ScoreRepository {
   // FirebaseFirestore.instance is a singleton — same pattern as FirebaseAuth.
   // We accept an override for testability.
-  final FirebaseFirestore _firestore;
+  final FirebaseFirestore? _firestoreOverride;
 
   ScoreRepository({FirebaseFirestore? firestore})
       : _firestoreOverride = firestore;

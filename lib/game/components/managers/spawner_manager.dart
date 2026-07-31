@@ -21,8 +21,8 @@ class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
 
     if (difficultyManager.currentPhase == 3 && !_venomSpawned) {
       _venomSpawned = true;
-      gameRef.add(VenomBoss()
-        ..position = Vector2(gameRef.size.x + 100, gameRef.size.y - 150));
+      gameRef.world.add(VenomBoss()
+        ..position = Vector2(gameRef.camera.viewfinder.position.x + gameRef.size.x, gameRef.size.y - 150));
       return; // Give some time before spawning other enemies, or just let them spawn too.
     }
 
@@ -42,15 +42,18 @@ class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
 
     double speed = difficultyManager.enemySpeedMultiplier * 150.0;
     
+    // Spawn enemies relative to the camera's current position so they come from off-screen right
+    double spawnX = gameRef.camera.viewfinder.position.x + gameRef.size.x;
+
     if (spawnAirborne) {
       double initialY = gameRef.size.y / 2 - 100 + _random.nextDouble() * 200;
-      gameRef.add(AirborneEnemy(speed: speed, initialY: initialY)
-        ..position = Vector2(gameRef.size.x + 50, initialY));
+      gameRef.world.add(AirborneEnemy(speed: speed, initialY: initialY)
+        ..position = Vector2(spawnX, initialY));
     } else {
       // Spawn on the ground (assuming floor at gameRef.size.y - 100)
       CrawlerType cType = _random.nextBool() ? CrawlerType.little : CrawlerType.tall;
-      gameRef.add(CrawlerEnemy(speed: speed, crawlerType: cType)
-        ..position = Vector2(gameRef.size.x + 50, gameRef.size.y - 116)); // 100 floor + 16 half size
+      gameRef.world.add(CrawlerEnemy(speed: speed, crawlerType: cType)
+        ..position = Vector2(spawnX, gameRef.size.y - 116)); // 100 floor + 16 half size
     }
   }
 }

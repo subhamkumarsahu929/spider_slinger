@@ -8,7 +8,7 @@ class CrawlerEnemy extends Enemy {
   final CrawlerType crawlerType;
 
   CrawlerEnemy({required double speed, required this.crawlerType}) 
-      : super(type: EnemyType.crawler, speed: speed, size: Vector2(48, 32));
+      : super(type: EnemyType.crawler, speed: speed, size: Vector2(96, 64));
 
   @override
   Future<void> onLoad() async {

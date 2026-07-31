@@ -8,11 +8,13 @@ import 'firebase_options.dart';                      // ← NEW: auto-generated 
 import 'game/state/game_state.dart';
 import 'game/spider_slinger_game.dart';
 import 'config/game_routes.dart';
-import 'services/auth_service.dart';                 // ← NEW: our auth wrapper
+import 'services/auth_service.dart';
+import 'ui/overlays/user_registration_overlay.dart';
 import 'ui/overlays/main_menu_overlay.dart';
 import 'ui/overlays/hud_overlay.dart';
 import 'ui/overlays/pause_menu_overlay.dart';
 import 'ui/overlays/game_over_overlay.dart';
+import 'ui/screens/leaderboard_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,8 +84,6 @@ class _SpiderSlingerAppState extends State<SpiderSlingerApp> {
 
   @override
   Widget build(BuildContext context) {
-    final gameState = Provider.of<GameState>(context, listen: false);
-
     return MaterialApp(
       title: 'Spider-Slinger',
       debugShowCheckedModeBanner: false,
@@ -91,17 +91,32 @@ class _SpiderSlingerAppState extends State<SpiderSlingerApp> {
         primarySwatch: Colors.blue,
         fontFamily: 'Courier',
       ),
-      home: Scaffold(
-        body: GameWidget<SpiderSlingerGame>(
-          game: SpiderSlingerGame(gameState: gameState),
-          initialActiveOverlays: const [GameRoutes.mainMenu],
-          overlayBuilderMap: {
-            GameRoutes.mainMenu: (context, game) => MainMenuOverlay(game: game),
-            GameRoutes.hud: (context, game) => HudOverlay(game: game),
-            GameRoutes.pauseMenu: (context, game) => PauseMenuOverlay(game: game),
-            GameRoutes.gameOver: (context, game) => GameOverOverlay(game: game),
-          },
-        ),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const GameScreen(),
+        GameRoutes.leaderboardRoute: (context) => const LeaderboardScreen(),
+      },
+    );
+  }
+}
+
+class GameScreen extends StatelessWidget {
+  const GameScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final gameState = Provider.of<GameState>(context, listen: false);
+    return Scaffold(
+      body: GameWidget<SpiderSlingerGame>(
+        game: SpiderSlingerGame(gameState: gameState),
+        initialActiveOverlays: const [GameRoutes.registration],
+        overlayBuilderMap: {
+          GameRoutes.registration: (context, game) => UserRegistrationOverlay(game: game),
+          GameRoutes.mainMenu: (context, game) => MainMenuOverlay(game: game),
+          GameRoutes.hud: (context, game) => HudOverlay(game: game),
+          GameRoutes.pauseMenu: (context, game) => PauseMenuOverlay(game: game),
+          GameRoutes.gameOver: (context, game) => GameOverOverlay(game: game),
+        },
       ),
     );
   }

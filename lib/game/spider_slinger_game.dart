@@ -2,8 +2,8 @@ import 'package:flame/game.dart';
 import 'state/game_state.dart';
 import 'components/player/player_component.dart';
 import 'components/environment/parallax_bg.dart';
-import 'components/environment/platform_block.dart';
 import 'components/managers/difficulty_manager.dart';
+import 'components/managers/procedural_spawner.dart';
 import 'components/managers/spawner_manager.dart';
 import '../config/game_constants.dart';
 
@@ -17,7 +17,7 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
   Future<void> onLoad() async {
     super.onLoad();
 
-    // Pre-cache enemy assets
+    // Pre-cache enemy and environment assets
     await images.loadAll([
       'enemies/Little-Enemy/Little-Enemy-Idle-Sheet.png',
       'enemies/Little-Enemy/Little-Enemy-Walk-Sheet.png',
@@ -34,26 +34,23 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
       'enemies/Fly-Enemy/Fly-Enemy-Hit-Sheet.png',
       'enemies/Fly-Enemy/Fly-Enemy-Death-Sheet.png',
       'enemies/Venom.png',
+      'environment/platform-template.png',
     ]);
 
-    // Background
+    // Background (Keep Parallax on game root or world? ParallaxBg usually goes on game root so it fills screen, 
+    // but in Flame 1.9+ we can add it to the background layer. Let's keep it on game root for now)
     add(ParallaxBg());
 
     // Managers
     final difficultyManager = DifficultyManager();
-    add(difficultyManager);
+    add(difficultyManager); // Managers can stay on game root
     add(SpawnerManager(difficultyManager: difficultyManager));
+    add(ProceduralSpawner());
 
     // Player
     _player = PlayerComponent()
       ..position = Vector2(100, size.y - 200);
-    add(_player);
-
-    // Floor - Make it much wider since the player can move!
-    add(PlatformBlock(
-      position: Vector2(-5000, size.y - 100),
-      size: Vector2(10000, 100),
-    ));
+    world.add(_player);
 
     camera.follow(_player);
   }
@@ -63,15 +60,15 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
   }
 
   void startMovingLeft() {
-    _player.horizontalVelocity = -GameConstants.playerSpeed;
+    _player.moveLeft();
   }
 
   void startMovingRight() {
-    _player.horizontalVelocity = GameConstants.playerSpeed;
+    _player.moveRight();
   }
 
   void stopMoving() {
-    _player.horizontalVelocity = 0;
+    _player.stopMoving();
   }
 
   void shootHorizontalWeb() {
@@ -80,5 +77,9 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
 
   void shootVerticalWeb() {
     _player.shootVerticalWeb();
+  }
+
+  void triggerSwing() {
+    _player.triggerSwing();
   }
 }

@@ -39,7 +39,23 @@ class MainMenuOverlay extends StatelessWidget {
                 // We might need to initialize audio here due to browser policies if on web
                 AudioService.initialize();
               },
-              child: const Text('Start Game', style: TextStyle(fontSize: 24)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent.shade700,
+                padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+              ),
+              child: const Text('TAP TO PLAY', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white)),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pushNamed(context, '/leaderboard');
+              },
+              icon: const Icon(Icons.leaderboard, color: Colors.white),
+              label: const Text('VIEW LIVE LEADERBOARD', style: TextStyle(fontSize: 16, color: Colors.white)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blueGrey.shade800,
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+              ),
             ),
           ],
         ),

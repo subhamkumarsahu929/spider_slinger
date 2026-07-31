@@ -10,7 +10,7 @@ class AirborneEnemy extends Enemy {
   final double initialY;
 
   AirborneEnemy({required double speed, required this.initialY}) 
-      : super(type: EnemyType.airborne, speed: speed, size: Vector2(40, 40));
+      : super(type: EnemyType.airborne, speed: speed, size: Vector2(80, 80));
 
   @override
   Future<void> onLoad() async {

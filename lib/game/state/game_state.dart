@@ -26,6 +26,8 @@ class GameState extends ChangeNotifier {
   bool _isGameOver = false;
   bool _isInvulnerable = false;
   AppUser? _currentUser;
+  String? studentName;
+  String? rollNumber;
   int _attempts = 0;
 
   // Firebase repositories — both write to Firestore on game over.
@@ -40,18 +42,21 @@ class GameState extends ChangeNotifier {
   AppUser? get currentUser => _currentUser;
   int get attempts => _attempts;
 
-  // ── setUser ────────────────────────────────────────────────────────────────
-  // Called by main.dart's _signInSilently() when the auth stream fires.
-  // Immediately writes/updates the user document in Firestore.
   void setUser(AppUser? user) {
     _currentUser = user;
     notifyListeners();
 
-    // Register the user in the 'users' Firestore collection.
-    // If first launch: creates the doc. If returning player: updates lastSeenAt.
-    // merge: true in the repo ensures no existing data (like bestScore) is overwritten.
     if (user != null) {
-      _userRepository.registerOrUpdateUser(user);
+      _userRepository.registerOrUpdateUser(user, studentName, rollNumber);
+    }
+  }
+
+  void setStudentInfo(String name, String roll) {
+    studentName = name;
+    rollNumber = roll;
+    notifyListeners();
+    if (_currentUser != null) {
+      _userRepository.registerOrUpdateUser(_currentUser!, studentName, rollNumber);
     }
   }
 

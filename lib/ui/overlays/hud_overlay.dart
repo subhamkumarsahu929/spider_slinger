@@ -96,6 +96,12 @@ class HudOverlay extends StatelessWidget {
                               color: Colors.red,
                               onPressed: game.shootHorizontalWeb,
                             ),
+                            const SizedBox(height: 16),
+                            VirtualButton(
+                              icon: Icons.sync, // Swing icon
+                              color: Colors.purple,
+                              onPressed: game.triggerSwing,
+                            ),
                           ],
                         ),
                       ],

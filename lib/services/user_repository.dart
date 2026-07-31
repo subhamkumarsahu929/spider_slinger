@@ -32,16 +32,23 @@ class UserRepository {
   // or just updates 'lastSeenAt' if it does.
   // SetOptions(merge: true) is the key — it only writes the fields you specify,
   // leaving all other fields (like bestScore) untouched.
-  Future<void> registerOrUpdateUser(AppUser user) async {
+  Future<void> registerOrUpdateUser(AppUser user, String? studentName, String? rollNumber) async {
     try {
+      final data = {
+        ...user.toFirestoreMap(),
+        'lastSeenAt': FieldValue.serverTimestamp(),
+      };
+      
+      if (studentName != null && studentName.isNotEmpty) {
+        data['name'] = studentName;
+      }
+      if (rollNumber != null && rollNumber.isNotEmpty) {
+        data['rollNumber'] = rollNumber;
+      }
+
       await _firestore.collection('users').doc(user.uid).set(
-        {
-          ...user.toFirestoreMap(),
-          // Overwrite createdAt only if the doc doesn't exist yet.
-          // merge: true means this won't stomp the original createdAt.
-          'lastSeenAt': FieldValue.serverTimestamp(),
-        },
-        SetOptions(merge: true), // ← "update if exists, create if not"
+        data,
+        SetOptions(merge: true),
       );
       debugPrint('[UserRepository] User registered/updated: ${user.uid}');
     } on FirebaseException catch (e) {

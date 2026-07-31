@@ -3,12 +3,13 @@ import 'package:flame/collisions.dart';
 import '../../spider_slinger_game.dart';
 import 'web_shot.dart';
 import 'vertical_web.dart';
+import '../environment/platform_block.dart';
 import '../../../config/game_constants.dart';
 import '../../../services/audio_service.dart';
 
 enum PlayerState { idle, running, jumping, hanging, attacking, hurt }
 
-class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with HasGameRef<SpiderSlingerGame>, CollisionCallbacks {
+class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with HasGameReference<SpiderSlingerGame>, CollisionCallbacks {
   double verticalVelocity = 0.0;
   double horizontalVelocity = 0.0;
   bool isGrounded = false;
@@ -16,8 +17,13 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
   bool isAttacking = false;
   bool isHurt = false;
   bool isFacingRight = true;
+  bool isUpsideDown = false;
+  bool isSwinging = false;
+  bool moveInputLeft = false;
+  bool moveInputRight = false;
   double attackTimer = 0.0;
   double hurtTimer = 0.0;
+  double swingTimer = 0.0;
   VerticalWeb? currentVerticalWeb;
 
   PlayerComponent() : super(size: Vector2(64, 64), anchor: Anchor.center);
@@ -25,7 +31,7 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
   @override
   Future<void> onLoad() async {
     try {
-      final image = await gameRef.images.load('sprites/Spider-Man.png');
+      final image = await game.images.load('sprites/Spider-Man.png');
       final spriteSize = Vector2(image.width / 5, image.height / 5);
       
       SpriteAnimation createAnimation(List<int> frames) {
@@ -64,7 +70,7 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
   void update(double dt) {
     super.update(dt);
     
-    if (gameRef.gameState.isGameOver) return;
+    if (game.gameState.isGameOver) return;
 
     if (isAttacking) {
       attackTimer -= dt;
@@ -74,6 +80,26 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
     if (isHurt) {
       hurtTimer -= dt;
       if (hurtTimer <= 0) isHurt = false;
+    }
+
+    if (isSwinging) {
+      swingTimer -= dt;
+      if (swingTimer <= 0) {
+        isSwinging = false;
+        // Revert to input-driven velocity
+        if (moveInputLeft) {
+          horizontalVelocity = -GameConstants.playerSpeed;
+        } else if (moveInputRight) {
+          horizontalVelocity = GameConstants.playerSpeed;
+        } else {
+          horizontalVelocity = 0;
+        }
+      }
+    } else {
+      // Ensure velocity matches input if not swinging
+      if (moveInputLeft) horizontalVelocity = -GameConstants.playerSpeed;
+      else if (moveInputRight) horizontalVelocity = GameConstants.playerSpeed;
+      else horizontalVelocity = 0;
     }
 
     // Direction Flipping Logic
@@ -88,27 +114,38 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
     }
 
     if (!isHanging) {
+      // Un-flip vertically if we detached
+      if (isUpsideDown) {
+        flipVerticallyAroundCenter();
+        isUpsideDown = false;
+      }
+
       // Apply horizontal and vertical movement
       position.x += horizontalVelocity * dt;
       
-      // Bounds check so player doesn't run infinitely left
-      if (position.x < size.x / 2) {
-        position.x = size.x / 2;
+      // Bounds check so player doesn't run infinitely left past camera
+      if (position.x < game.camera.viewfinder.position.x - game.size.x / 2 + size.x / 2) {
+        position.x = game.camera.viewfinder.position.x - game.size.x / 2 + size.x / 2;
       }
 
-      // Apply gravity
+      // Apply gravity (isGrounded will be resolved by onCollision)
       verticalVelocity += GameConstants.gravity * dt;
       position.y += verticalVelocity * dt;
+      isGrounded = false; // Reset every frame; collision resolves it to true if touching
 
-      // Basic floor collision fallback for testing
-      if (position.y >= gameRef.size.y - 100) {
-        position.y = gameRef.size.y - 100;
-        verticalVelocity = 0;
-        isGrounded = true;
-      } else {
-        isGrounded = false;
+      // Fallback if falls into the void (death)
+      if (position.y > game.size.y + 200) {
+         hit();
+         position.y = 100; // Reset high up
+         verticalVelocity = 0;
       }
     } else {
+      // Hanging upside down
+      if (!isUpsideDown) {
+        flipVerticallyAroundCenter();
+        isUpsideDown = true;
+      }
+
       // Swinging mechanics (horizontal movement while hanging)
       if (horizontalVelocity != 0) {
         position.x += horizontalVelocity * dt;
@@ -132,23 +169,85 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
     }
   }
 
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    if (other is PlatformBlock) {
+      // Resolve falling collision
+      if (verticalVelocity > 0) {
+        double platformTop = other.position.y;
+        double playerBottom = position.y + size.y / 2;
+        
+        // Ensure we were roughly above or near the top of the platform to stand on it
+        if (playerBottom - verticalVelocity * 0.016 <= platformTop + 20) {
+          position.y = platformTop - size.y / 2 + 1; // +1 ensures continuous intersection
+          verticalVelocity = 0;
+          isGrounded = true;
+        }
+      }
+    }
+    super.onCollision(intersectionPoints, other);
+  }
+
   void jump() {
     if (isGrounded && !isHanging) {
       verticalVelocity = GameConstants.jumpForce;
       isGrounded = false;
       AudioService.playJump();
     } else if (isHanging) {
-      // Detach and jump
+      // Detach and drop
       isHanging = false;
       currentVerticalWeb?.removeFromParent();
       currentVerticalWeb = null;
-      verticalVelocity = GameConstants.jumpForce;
+      verticalVelocity = GameConstants.jumpForce * 0.5;
+    }
+  }
+
+  void triggerSwing() {
+    if (isHanging) {
+      isHanging = false;
+      currentVerticalWeb?.removeFromParent();
+      currentVerticalWeb = null;
+      
+      // Massive forward leap!
+      verticalVelocity = GameConstants.jumpForce * 0.8;
+      
+      // Determine direction based on current input, or face direction if no input
+      if (moveInputLeft) {
+        horizontalVelocity = -500;
+        isFacingRight = false;
+      } else if (moveInputRight) {
+        horizontalVelocity = 500;
+        isFacingRight = true;
+      } else {
+        horizontalVelocity = isFacingRight ? 500 : -500;
+      }
+      
+      // Activate swing timer to stop horizontal momentum shortly after
+      isSwinging = true;
+      swingTimer = 0.35; // 350ms of forward momentum before stopping
+
       AudioService.playJump();
     }
   }
 
+  void moveLeft() {
+    moveInputLeft = true;
+    if (!isSwinging) horizontalVelocity = -GameConstants.playerSpeed;
+  }
+
+  void moveRight() {
+    moveInputRight = true;
+    if (!isSwinging) horizontalVelocity = GameConstants.playerSpeed;
+  }
+
+  void stopMoving() {
+    moveInputLeft = false;
+    moveInputRight = false;
+    if (!isSwinging) horizontalVelocity = 0;
+  }
+
   void shootHorizontalWeb() {
-    if (gameRef.gameState.isGameOver) return;
+    if (game.gameState.isGameOver) return;
     
     isAttacking = true;
     attackTimer = 0.3; // Give the attack animation time to play
@@ -158,29 +257,29 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
       position: position.clone() + Vector2(directionMultiplier * (size.x / 2), 0),
       direction: directionMultiplier,
     );
-    gameRef.add(web);
+    game.world.add(web);
     AudioService.playWebShot();
   }
 
   void shootVerticalWeb() {
-    if (gameRef.gameState.isGameOver || isHanging) return;
+    if (game.gameState.isGameOver || isHanging) return;
     
     if (!isGrounded) {
       isHanging = true;
       verticalVelocity = 0;
       // Web Anchor World Position fix: uses global world x position
       currentVerticalWeb = VerticalWeb(position: position.clone()..y -= size.y/2);
-      gameRef.add(currentVerticalWeb!);
+      game.world.add(currentVerticalWeb!);
       AudioService.playWebShot();
     }
   }
 
   void hit() {
-    gameRef.gameState.takeDamage();
+    game.gameState.takeDamage();
     isHurt = true;
     hurtTimer = 0.45; // About 3 frames at 0.15s each
     AudioService.playHit();
-    if (gameRef.gameState.lives <= 0) {
+    if (game.gameState.lives <= 0) {
       AudioService.playGameOver();
     }
   }

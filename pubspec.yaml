@@ -40,6 +40,7 @@ dependencies:
   firebase_core: ^4.12.1
   firebase_auth: ^6.5.6
   cloud_firestore: ^6.7.1
+  shared_preferences: ^2.5.5
 
 dev_dependencies:
   flutter_test:
@@ -70,6 +71,8 @@ flutter:
     - assets/images/enemies/Little-Enemy/
     - assets/images/enemies/Tall-Enemy/
     - assets/images/enemies/Venom.png
+    - assets/images/environment/
+
 
 
     
