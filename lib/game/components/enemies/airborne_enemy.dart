@@ -9,23 +9,24 @@ class AirborneEnemy extends Enemy {
   final double hoverFrequency = 3.0;
   final double initialY;
 
-  AirborneEnemy({required double speed, required this.initialY}) 
-      : super(type: EnemyType.airborne, speed: speed, size: Vector2(80, 80));
+  AirborneEnemy({required super.speed, required this.initialY}) 
+      : super(type: EnemyType.airborne, size: Vector2(80, 80));
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    add(CircleHitbox());
+    // Tighten hitbox (Sprite is 80x80, real visual is ~40x40 centered)
+    add(CircleHitbox(radius: 20, position: Vector2(20, 20)));
 
     const String prefix = 'enemies/Fly-Enemy/Fly-Enemy';
 
     // Assumed amounts. Adjust if your sprite sheets differ.
     animations = {
-      EnemyState.idle: createAnim('$prefix-Idle-Sheet.png', amount: 4),
-      EnemyState.walk: createAnim('$prefix-Idle-Sheet.png', amount: 4), // Fallback walk to idle
+      EnemyState.idle:   createAnim('$prefix-Idle-Sheet.png', amount: 4),
+      EnemyState.walk:   createAnim('$prefix-Idle-Sheet.png', amount: 4), // Airborne — no walk sheet; mirrors idle
       EnemyState.attack: createAnim('$prefix-Attack-Sheet.png', amount: 4),
-      EnemyState.hit: createAnim('$prefix-Hit-Sheet.png', amount: 2, loop: false),
-      EnemyState.death: createAnim('$prefix-Death-Sheet.png', amount: 4, loop: false),
+      EnemyState.hit:    createAnim('$prefix-Hit-Sheet.png', amount: 2, loop: false),
+      EnemyState.death:  createAnim('$prefix-Death-Sheet.png', amount: 4, loop: false),
     };
 
     current = EnemyState.idle;

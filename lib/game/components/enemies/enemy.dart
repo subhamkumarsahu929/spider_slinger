@@ -2,16 +2,26 @@ import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import '../../spider_slinger_game.dart';
 import '../player/player_component.dart';
+import '../environment/platform_block.dart';
+import '../../../config/game_constants.dart';
 
 enum EnemyType { crawler, airborne }
 enum EnemyState { idle, walk, attack, hit, death }
 
-abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasGameReference<SpiderSlingerGame>, CollisionCallbacks {
+abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
+    with HasGameReference<SpiderSlingerGame>, CollisionCallbacks {
   final EnemyType type;
   double speed;
   bool isDying = false;
 
-  Enemy({required this.type, required this.speed, required Vector2 size}) : super(size: size, anchor: Anchor.center);
+  /// Set to true for enemies that should obey gravity (e.g. crawlers).
+  /// Airborne enemies override this to false.
+  bool useGravity = false;
+  double verticalVelocity = 0.0;
+  bool isGrounded = false;
+
+  Enemy({required this.type, required this.speed, required Vector2 size})
+      : super(size: size, anchor: Anchor.center);
 
   @override
   Future<void> onLoad() async {
@@ -36,6 +46,19 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     } else {
       double horizontalMovement = -speed * dt; // Moving left by default
       position.x += horizontalMovement;
+
+      // #6 — Apply gravity for ground-based enemies
+      if (useGravity) {
+        if (!isGrounded) {
+          verticalVelocity += GameConstants.gravity * dt;
+          // Terminal velocity
+          if (verticalVelocity > GameConstants.maxFallSpeed) {
+            verticalVelocity = GameConstants.maxFallSpeed;
+          }
+        }
+        position.y += verticalVelocity * dt;
+        isGrounded = false; // Reset; collision resolves it
+      }
       
       // Direction Flipping Logic
       bool movingLeft = horizontalMovement < 0;
@@ -61,6 +84,27 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState> with HasG
     if (other is PlayerComponent) {
       if (!game.gameState.isInvulnerable && !isDying) {
         other.hit();
+      }
+    }
+    // #6 — Ground-based enemies land on platforms
+    if (useGravity && other is PlatformBlock && verticalVelocity >= 0) {
+      if (intersectionPoints.isNotEmpty) {
+        position.y = other.position.y - size.y / 2;
+        verticalVelocity = 0;
+        isGrounded = true;
+      }
+    }
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+    // Keep enemy grounded on platforms while standing on them
+    if (useGravity && other is PlatformBlock && verticalVelocity >= 0) {
+      if (intersectionPoints.isNotEmpty) {
+        position.y = other.position.y - size.y / 2;
+        verticalVelocity = 0;
+        isGrounded = true;
       }
     }
   }

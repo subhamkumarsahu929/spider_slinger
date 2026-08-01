@@ -6,7 +6,7 @@ import '../enemies/venom_boss.dart';
 import '../../spider_slinger_game.dart';
 import 'dart:math';
 
-class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
+class SpawnerManager extends Component with HasGameReference<SpiderSlingerGame> {
   final DifficultyManager difficultyManager;
   double _timer = 0;
   final Random _random = Random();
@@ -17,16 +17,18 @@ class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
   @override
   void update(double dt) {
     super.update(dt);
-    if (gameRef.gameState.isGameOver) return;
+    if (game.gameState.isGameOver) return;
 
     if (difficultyManager.currentPhase == 3 && !_venomSpawned) {
       _venomSpawned = true;
-      gameRef.world.add(VenomBoss()
-        ..position = Vector2(gameRef.camera.viewfinder.position.x + gameRef.size.x, gameRef.size.y - 150));
+      game.world.add(VenomBoss()
+        ..position = Vector2(game.camera.viewfinder.position.x + game.size.x, game.size.y - 150));
       return; // Give some time before spawning other enemies, or just let them spawn too.
     }
 
     _timer += dt;
+    // #6 — No regular enemy spawning during the boss fight
+    if (_venomSpawned) return;
     if (_timer >= difficultyManager.spawnRate) {
       _timer = 0;
       _spawnEnemy();
@@ -43,17 +45,18 @@ class SpawnerManager extends Component with HasGameRef<SpiderSlingerGame> {
     double speed = difficultyManager.enemySpeedMultiplier * 150.0;
     
     // Spawn enemies relative to the camera's current position so they come from off-screen right
-    double spawnX = gameRef.camera.viewfinder.position.x + gameRef.size.x;
+    double spawnX = game.camera.viewfinder.position.x + game.size.x;
 
     if (spawnAirborne) {
-      double initialY = gameRef.size.y / 2 - 100 + _random.nextDouble() * 200;
-      gameRef.world.add(AirborneEnemy(speed: speed, initialY: initialY)
+      double initialY = game.size.y / 2 - 100 + _random.nextDouble() * 200;
+      game.world.add(AirborneEnemy(speed: speed, initialY: initialY)
         ..position = Vector2(spawnX, initialY));
     } else {
-      // Spawn on the ground (assuming floor at gameRef.size.y - 100)
+      // #1 — Spawn above the floor so gravity drops them onto whatever platform
+      // is beneath spawnX — avoids floating in mid-air over procedural gaps.
       CrawlerType cType = _random.nextBool() ? CrawlerType.little : CrawlerType.tall;
-      gameRef.world.add(CrawlerEnemy(speed: speed, crawlerType: cType)
-        ..position = Vector2(spawnX, gameRef.size.y - 116)); // 100 floor + 16 half size
+      game.world.add(CrawlerEnemy(speed: speed, crawlerType: cType)
+        ..position = Vector2(spawnX, game.size.y - 250));
     }
   }
 }

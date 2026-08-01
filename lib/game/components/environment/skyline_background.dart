@@ -17,128 +17,190 @@ class DayNightManager extends Component {
       cycleTimer -= 60.0;
     }
 
-    // 0 to 30: Day time (transition to night at the end)
-    // 30 to 60: Night time (transition to day at the end)
+    // 0 to 27: Day time
+    // 27 to 30: Transition Day -> Night (3 seconds)
+    // 30 to 57: Night time
+    // 57 to 60: Transition Night -> Day (3 seconds)
     
     if (cycleTimer < 27.0) {
-      // Full Day
       dayNightProgress = 0.0;
     } else if (cycleTimer < 30.0) {
-      // Transition Day -> Night (3 seconds)
       dayNightProgress = (cycleTimer - 27.0) / 3.0;
     } else if (cycleTimer < 57.0) {
-      // Full Night
       dayNightProgress = 1.0;
     } else {
-      // Transition Night -> Day (3 seconds)
       dayNightProgress = 1.0 - ((cycleTimer - 57.0) / 3.0);
     }
     
-    // Clamp to be safe
     dayNightProgress = dayNightProgress.clamp(0.0, 1.0);
   }
 }
 
 class SkylineBackground extends Component with HasGameReference<SpiderSlingerGame> {
   late final DayNightManager dayNightManager;
+  final List<Offset> _stars = [];
   final Random _random = Random();
-  double _lastSpawnX = 0.0;
 
   @override
   Future<void> onLoad() async {
     dayNightManager = DayNightManager();
     add(dayNightManager);
 
-    // Initial spawn to fill the screen
+    // Pre-populate random stars
+    for (int i = 0; i < 40; i++) {
+      _stars.add(Offset(_random.nextDouble(), _random.nextDouble()));
+    }
+
+    // Add three layers of buildings with increasing speed, scale, and base opacity
+    // Far layer (slowest, smallest, most faint)
+    add(SkylineLayer(
+      parallaxSpeed: 0.08,
+      scaleFactor: 0.5,
+      yOffset: 80.0,
+      baseOpacity: 0.35,
+    ));
+
+    // Mid layer (medium)
+    add(SkylineLayer(
+      parallaxSpeed: 0.18,
+      scaleFactor: 0.75,
+      yOffset: 35.0,
+      baseOpacity: 0.65,
+    ));
+
+    // Near layer (fastest, full size, full opacity)
+    add(SkylineLayer(
+      parallaxSpeed: 0.32,
+      scaleFactor: 1.0,
+      yOffset: 0.0,
+      baseOpacity: 1.0,
+    ));
+  }
+
+  @override
+  void render(Canvas canvas) {
+    final progress = dayNightManager.dayNightProgress;
+    final rect = Rect.fromLTWH(0, 0, game.size.x, game.size.y);
+
+    // Linear gradient for Day and Night sky
+    // Day Sky: Sky blue -> lighter sunset horizon
+    // Night Sky: Deep dark indigo -> dark purple
+    final dayTop = const Color(0xFF1E88E5);
+    final dayBottom = const Color(0xFF90CAF9);
+    final nightTop = const Color(0xFF030712);
+    final nightBottom = const Color(0xFF1E1E2E);
+
+    final lerpedTop = Color.lerp(dayTop, nightTop, progress)!;
+    final lerpedBottom = Color.lerp(dayBottom, nightBottom, progress)!;
+
+    final paint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [lerpedTop, lerpedBottom],
+      ).createShader(rect);
+
+    canvas.drawRect(rect, paint);
+
+    // Render stars when progress > 0
+    if (progress > 0.05) {
+      final starPaint = Paint()..color = Colors.white.withValues(alpha: progress * 0.7);
+      for (final star in _stars) {
+        // Draw star in top 60% of the screen
+        canvas.drawCircle(
+          Offset(star.dx * game.size.x, star.dy * game.size.y * 0.6),
+          1.5,
+          starPaint,
+        );
+      }
+    }
+  }
+}
+
+class SkylineLayer extends Component with HasGameReference<SpiderSlingerGame> {
+  final double parallaxSpeed;
+  final double scaleFactor;
+  final double yOffset;
+  final double baseOpacity;
+
+  double _lastSpawnX = 0.0;
+  final Random _random = Random();
+
+  SkylineLayer({
+    required this.parallaxSpeed,
+    required this.scaleFactor,
+    required this.yOffset,
+    required this.baseOpacity,
+  });
+
+  @override
+  Future<void> onLoad() async {
     _lastSpawnX = game.camera.viewfinder.position.x;
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    
-    // Spawn buildings ahead of the camera
-    // Since buildings move at 0.3x speed relative to the camera, we need to spawn them
-    // based on their parallax position. But to keep it simple, we can spawn them in world space
-    // and adjust their position inside the BuildingPairComponent itself, OR we just position them 
-    // in a pseudo-world space where they govern their own X position based on camera.
-    // Actually, if we just spawn them using a tracker _lastSpawnX, they can move at 0.7x speed leftwards.
-    // Let's spawn them in their own local coordinate system.
-    
-    // Camera right edge in standard world space
+
     double cameraRightEdge = game.camera.viewfinder.position.x + game.size.x;
-    
-    // We want to fill the background. The background moves at 0.3x camera speed.
-    // So the background's right edge needs to cover the camera's right edge.
-    // We can just keep spawning buildings until _lastSpawnX > cameraRightEdge * 0.3 + game.size.x
-    double targetSpawnX = (cameraRightEdge * 0.3) + game.size.x;
+    // Calculate the trigger range for this parallax layer
+    double targetSpawnX = (cameraRightEdge * parallaxSpeed) + game.size.x;
 
     final validIds = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14];
     while (_lastSpawnX < targetSpawnX) {
       int buildingId = validIds[_random.nextInt(validIds.length)];
+
+      final daySprite = Sprite(game.images.fromCache('buildings/build_day_$buildingId.png'));
+      final spriteSize = daySprite.srcSize * scaleFactor;
+
       final building = BuildingPairComponent(
         buildingId: buildingId,
         spawnX: _lastSpawnX,
+        parallaxSpeed: parallaxSpeed,
+        scaleFactor: scaleFactor,
+        yOffset: yOffset,
+        baseOpacity: baseOpacity,
+        spriteSize: spriteSize,
       );
       add(building);
-      
-      // We don't know the exact width until it loads, but we can assume an average width to advance
-      // the tracker, or we can await the sprite. Since we can't await in update(), we will pass 
-      // a callback to the building to advance _lastSpawnX once it loads, OR we can just use a fixed width 
-      // if all buildings share a similar width (e.g. 256).
-      // Let's use a fixed assumed width for the tracker, and the building can just snap to _lastSpawnX.
-      // Wait, it's better to just load the sprite in the spawner?
-      // Since assets are pre-cached, game.images.fromCache is synchronous!
-      final daySprite = Sprite(game.images.fromCache('buildings/build_day_$buildingId.png'));
-      building.spriteSize = daySprite.srcSize;
-      
-      _lastSpawnX += building.spriteSize.x;
-    }
-  }
 
-  @override
-  void render(Canvas canvas) {
-    // Render the Sky gradient/color
-    // Day: 0xFF87CEEB, Night: 0xFF0B0C10
-    final dayColor = const Color(0xFF87CEEB);
-    final nightColor = const Color(0xFF0B0C10);
-    
-    final skyColor = Color.lerp(dayColor, nightColor, dayNightManager.dayNightProgress)!;
-    
-    // Fill the entire screen
-    // We need to render this independent of the camera position if this component is added to the world.
-    // Wait, if it's added to the game root (not world), it renders in screen space.
-    canvas.drawRect(
-      Rect.fromLTWH(0, 0, game.size.x, game.size.y),
-      Paint()..color = skyColor,
-    );
+      _lastSpawnX += spriteSize.x;
+    }
   }
 }
 
 class BuildingPairComponent extends PositionComponent with HasGameReference<SpiderSlingerGame> {
   final int buildingId;
   final double spawnX;
-  
+  final double parallaxSpeed;
+  final double scaleFactor;
+  final double yOffset;
+  final double baseOpacity;
+  final Vector2 spriteSize;
+
   late SpriteComponent dayBuilding;
   late SpriteComponent nightBuilding;
-  Vector2 spriteSize = Vector2.zero();
 
-  BuildingPairComponent({required this.buildingId, required this.spawnX});
+  BuildingPairComponent({
+    required this.buildingId,
+    required this.spawnX,
+    required this.parallaxSpeed,
+    required this.scaleFactor,
+    required this.yOffset,
+    required this.baseOpacity,
+    required this.spriteSize,
+  });
 
   @override
   Future<void> onLoad() async {
     final daySprite = Sprite(game.images.fromCache('buildings/build_day_$buildingId.png'));
     final nightSprite = Sprite(game.images.fromCache('buildings/build_night_$buildingId.png'));
-    
-    if (spriteSize == Vector2.zero()) {
-      spriteSize = daySprite.srcSize;
-    }
-    
+
     size = spriteSize;
     
-    // Position it so the bottom aligns with the screen bottom, or at a fixed Y.
-    // Let's align bottom to game.size.y
-    position.y = game.size.y - size.y;
+    // Bottom-align building based on screen bottom minus yOffset
+    // (Ensure we use game.size.y which represents the screen height)
+    position.y = game.size.y - size.y - yOffset;
 
     dayBuilding = SpriteComponent(sprite: daySprite, size: size);
     nightBuilding = SpriteComponent(sprite: nightSprite, size: size);
@@ -150,25 +212,19 @@ class BuildingPairComponent extends PositionComponent with HasGameReference<Spid
   @override
   void update(double dt) {
     super.update(dt);
-    
-    // Adjust opacity based on dayNightProgress
-    // We can get the manager from the parent
-    final parentSkyline = parent as SkylineBackground;
+
+    final layer = parent as SkylineLayer;
+    final parentSkyline = layer.parent as SkylineBackground;
     final progress = parentSkyline.dayNightManager.dayNightProgress;
-    
-    dayBuilding.paint.color = dayBuilding.paint.color.withValues(alpha: 1.0 - progress);
-    nightBuilding.paint.color = nightBuilding.paint.color.withValues(alpha: progress);
 
-    // Parallax Effect
-    // The camera moves right. To create depth, buildings should move slower than the foreground.
-    // If foreground speed is 1.0, and building speed is 0.3.
-    // We calculate position based on camera position.
+    dayBuilding.paint.color = dayBuilding.paint.color.withValues(alpha: (1.0 - progress) * baseOpacity);
+    nightBuilding.paint.color = nightBuilding.paint.color.withValues(alpha: progress * baseOpacity);
+
+    // Parallax movement formula
     double cameraX = game.camera.viewfinder.position.x;
-    
-    // position.x is updated to create the parallax scroll
-    position.x = spawnX - (cameraX * 0.3);
+    position.x = spawnX - (cameraX * parallaxSpeed);
 
-    // Despawn if it falls completely off the left of the screen
+    // Despawn when the building rolls completely off-screen left
     if (position.x + size.x < -100) {
       removeFromParent();
     }

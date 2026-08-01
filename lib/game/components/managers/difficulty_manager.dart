@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import '../../../config/game_constants.dart';
 import '../../spider_slinger_game.dart';
 
-class DifficultyManager extends Component with HasGameRef<SpiderSlingerGame> {
+class DifficultyManager extends Component with HasGameReference<SpiderSlingerGame> {
   double _gameTime = 0;
   
   int get currentPhase {
@@ -38,7 +38,7 @@ class DifficultyManager extends Component with HasGameRef<SpiderSlingerGame> {
   @override
   void update(double dt) {
     super.update(dt);
-    if (!gameRef.gameState.isGameOver) {
+    if (!game.gameState.isGameOver) {
       _gameTime += dt;
     }
   }

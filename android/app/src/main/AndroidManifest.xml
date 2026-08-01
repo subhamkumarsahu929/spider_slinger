@@ -6,6 +6,10 @@
         android:label="Spiderman : Web Slinger"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+        <!-- Disable Impeller to fix Vulkan/tombstone crashes on Adreno 619/OnePlus devices -->
+        <meta-data
+            android:name="io.flutter.embedding.android.EnableImpeller"
+            android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

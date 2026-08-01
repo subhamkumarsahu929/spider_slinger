@@ -2,6 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import '../../spider_slinger_game.dart';
 import '../player/player_component.dart';
+import '../environment/platform_block.dart';
 import '../../../config/game_constants.dart';
 
 enum VenomState { idle, running, leapAttack, groundPound, hit, death }
@@ -56,7 +57,8 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
 
     current = VenomState.running;
     
-    add(RectangleHitbox());
+    // Tighten boss hitbox (Sprite is 128x128, lots of empty space)
+    add(RectangleHitbox(size: Vector2(70, 90), position: Vector2(29, 38)));
   }
 
   @override
@@ -77,6 +79,8 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
     
     if (current == VenomState.death) {
       if (animationTicker?.done() ?? false) {
+        // #2 — Trigger win AFTER death animation finishes
+        game.gameState.triggerWin();
         removeFromParent();
       }
       return;
@@ -91,16 +95,21 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
 
     if (_isLeaping) {
       verticalVelocity += GameConstants.gravity * dt;
+      // Apply fall multiplier for a more dramatic leap arc
+      if (verticalVelocity > 0) {
+        verticalVelocity += GameConstants.gravity * (GameConstants.fallMultiplier - 1) * dt;
+      }
+      if (verticalVelocity > GameConstants.maxFallSpeed) {
+        verticalVelocity = GameConstants.maxFallSpeed;
+      }
       position.y += verticalVelocity * dt;
       position.x -= (runSpeed * 1.3) * dt; // Leap a bit faster
-      
-      double floorY = game.size.y - 100 - size.y / 2 + 30; // Adjust for hitbox/center
-      
-      if (position.y >= floorY) {
-        position.y = floorY;
-        _isLeaping = false;
-        _stateTimer = 0.0;
-        current = VenomState.groundPound;
+
+      // #7 — Screen-bottom safety fallback only (actual landing via onCollision)
+      final double fallbackFloorY = game.size.y - 100 - size.y / 2 + 30;
+      if (position.y >= fallbackFloorY) {
+        position.y = fallbackFloorY;
+        _landLeap();
       }
     } else {
       if (current == VenomState.groundPound) {
@@ -139,6 +148,13 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
     current = VenomState.leapAttack;
   }
 
+  /// Called when the leap arc completes (either via collision or fallback).
+  void _landLeap() {
+    _isLeaping = false;
+    _stateTimer = 0.0;
+    current = VenomState.groundPound;
+  }
+
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
@@ -147,17 +163,44 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
         other.hit();
       }
     }
+    // #7 — Land the leap on any platform, not a magic floor Y
+    if (_isLeaping && other is PlatformBlock && verticalVelocity >= 0) {
+      if (intersectionPoints.isNotEmpty) {
+        position.y = other.position.y - size.y / 2;
+        verticalVelocity = 0;
+        _landLeap();
+      }
+    }
+  }
+
+  @override
+  void onCollision(Set<Vector2> intersectionPoints, PositionComponent other) {
+    super.onCollision(intersectionPoints, other);
+    // Keep boss grounded while running
+    if (!_isLeaping && other is PlatformBlock && verticalVelocity >= 0) {
+      if (intersectionPoints.isNotEmpty) {
+        position.y = other.position.y - size.y / 2;
+        verticalVelocity = 0;
+      }
+    }
   }
 
   void hitByWeb(int damage) {
     if (isDying) return;
     health -= damage;
-    
+
+    // #13 — Camera shake on every hit; stronger shake on death
+    game.cameraShake(
+      duration: health <= 0 ? 0.45 : 0.2,
+      intensity: health <= 0 ? 14.0 : 7.0,
+    );
+
     current = VenomState.hit;
-    
+
     if (health <= 0) {
       isDying = true;
-      game.gameState.addScore(200);
+      // #5 — Proportional score: base 500 + 100 per life remaining
+      game.gameState.addScore(500 + game.gameState.lives * 100);
     }
   }
 }

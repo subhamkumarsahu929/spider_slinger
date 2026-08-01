@@ -33,49 +33,43 @@ class ProceduralSpawner extends Component with HasGameReference<SpiderSlingerGam
   }
 
   void _spawnNextSegment() {
-    // 1. Decide if we want a gap
-    bool isGap = _random.nextDouble() < 0.2;
+    int numBlocks = 3 + _random.nextInt(8);
+    double floorY = game.size.y - 100; // Solid continuous floor height
+    TileTheme theme = _random.nextBool() ? TileTheme.blue : TileTheme.purple;
     
-    if (isGap) {
-      // Create a jumpable gap (60 to 120 pixels)
-      _lastSpawnX += 60 + _random.nextDouble() * 60;
-    } else {
-      // 2. Spawn a platform segment
-      int numBlocks = 3 + _random.nextInt(10);
-      bool isFloating = _random.nextDouble() < 0.4;
-      double yPos = game.size.y - 100; // Floor height
+    double startX = _lastSpawnX;
+    
+    // 1. ALWAYS build a continuous solid floor segment
+    for (int i = 0; i < numBlocks; i++) {
+      game.world.add(PlatformBlock(position: Vector2(_lastSpawnX, floorY), theme: theme, platformType: PlatformType.groundBlock));
+      // Small chance for ground hazard (avoiding edges to be fair)
+      if (i > 0 && i < numBlocks - 1 && _random.nextDouble() < 0.15) {
+        _spawnHazardOptionally(Vector2(_lastSpawnX + 8, floorY - 16), theme);
+      }
+      _lastSpawnX += 32;
+    }
+    
+    // 2. 40% chance to spawn a floating platform hovering over this ground segment
+    if (_random.nextDouble() < 0.4) {
+      double floatingY = floorY - (70 + _random.nextDouble() * 80);
+      double currentX = startX;
       
-      if (isFloating) {
-        // Floating platform: height between 50 and 150 pixels above the floor
-        yPos -= (50 + _random.nextDouble() * 100);
+      // Spawn left edge
+      game.world.add(PlatformBlock(position: Vector2(currentX, floatingY), theme: theme, platformType: PlatformType.thinLedgeLeft));
+      currentX += 16;
+      
+      // Spawn mid blocks
+      int midBlocks = numBlocks - 1;
+      for (int i = 0; i < midBlocks; i++) {
+        game.world.add(PlatformBlock(position: Vector2(currentX, floatingY), theme: theme, platformType: PlatformType.thinLedgeMid));
+        if (i > 0 && i < midBlocks - 1 && _random.nextDouble() < 0.2) {
+          _spawnHazardOptionally(Vector2(currentX + 8, floatingY - 16), theme);
+        }
+        currentX += 32;
       }
       
-      TileTheme theme = _random.nextBool() ? TileTheme.blue : TileTheme.purple;
-      
-      if (isFloating) {
-        // Spawn left edge
-        game.world.add(PlatformBlock(position: Vector2(_lastSpawnX, yPos), theme: theme, platformType: PlatformType.thinLedgeLeft));
-        _lastSpawnX += 16;
-        
-        // Spawn mid blocks
-        for (int i = 0; i < numBlocks; i++) {
-          game.world.add(PlatformBlock(position: Vector2(_lastSpawnX, yPos), theme: theme, platformType: PlatformType.thinLedgeMid));
-          _spawnHazardOptionally(Vector2(_lastSpawnX + 8, yPos - 16), theme);
-          _lastSpawnX += 32;
-        }
-        
-        // Spawn right edge
-        game.world.add(PlatformBlock(position: Vector2(_lastSpawnX, yPos), theme: theme, platformType: PlatformType.thinLedgeRight));
-        _lastSpawnX += 16;
-        
-      } else {
-        // Spawn solid ground blocks
-        for (int i = 0; i < numBlocks; i++) {
-          game.world.add(PlatformBlock(position: Vector2(_lastSpawnX, yPos), theme: theme, platformType: PlatformType.groundBlock));
-          _spawnHazardOptionally(Vector2(_lastSpawnX + 8, yPos - 16), theme);
-          _lastSpawnX += 32;
-        }
-      }
+      // Spawn right edge
+      game.world.add(PlatformBlock(position: Vector2(currentX, floatingY), theme: theme, platformType: PlatformType.thinLedgeRight));
     }
   }
   

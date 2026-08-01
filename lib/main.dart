@@ -14,6 +14,7 @@ import 'ui/overlays/main_menu_overlay.dart';
 import 'ui/overlays/hud_overlay.dart';
 import 'ui/overlays/pause_menu_overlay.dart';
 import 'ui/overlays/game_over_overlay.dart';
+import 'ui/overlays/tutorial_overlay.dart';
 import 'ui/screens/leaderboard_screen.dart';
 
 void main() async {
@@ -122,6 +123,7 @@ class GameScreen extends StatelessWidget {
               GameRoutes.hud: (context, game) => HudOverlay(game: game),
               GameRoutes.pauseMenu: (context, game) => PauseMenuOverlay(game: game),
               GameRoutes.gameOver: (context, game) => GameOverOverlay(game: game),
+              GameRoutes.tutorial: (context, game) => TutorialOverlay(game: game),
             },
           ),
         );

@@ -1,8 +1,26 @@
 class GameConstants {
   static const double gravity = 900.0;
   static const double playerSpeed = 250.0;
-  static const double jumpForce = -450.0;
-  
+  static const double jumpForce = -550.0;
+
+  // Asymmetric gravity — makes arcs feel snappy instead of floaty
+  static const double fallMultiplier = 2.2;     // Applied when falling (v > 0)
+  static const double lowJumpMultiplier = 1.4;  // Applied when rising but jump not held
+
+  // Terminal velocity — prevents tunneling on lag spikes
+  static const double maxFallSpeed = 1200.0;
+
+  // Horizontal acceleration & friction — replaces instant velocity snap
+  static const double acceleration = 1200.0; // pixels/s²
+  static const double friction     = 1800.0; // pixels/s²
+
+  // Pendulum swing — real rope physics (#5)
+  static const double ropeLength   = 280.0;  // pixels from ceiling anchor to player
+  static const double swingDamping = 0.6;    // exponential air-resistance coefficient
+
+  // Web shot arc — gentle gravity on fired webs (#9)
+  static const double webArcGravity = 200.0; // pixels/s²
+
   static const int maxLives = 3;
   static const double invulnerabilityDuration = 2.0;
 
