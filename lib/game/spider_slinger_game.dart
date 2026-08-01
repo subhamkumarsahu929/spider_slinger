@@ -62,6 +62,10 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
     world.add(_player);
 
     camera.follow(_player);
+    
+    // Pause the engine immediately so the game doesn't run in the background
+    // while the splash screen or main menu is active.
+    pauseEngine();
   }
 
   /// Tears down the live world and reinitialises it cleanly.

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../game/spider_slinger_game.dart';
 import '../../config/game_routes.dart';
+import '../widgets/comic_button.dart';
+import '../widgets/comic_background_painter.dart';
 
 class UserRegistrationOverlay extends StatefulWidget {
   final SpiderSlingerGame game;
@@ -67,76 +70,118 @@ class _UserRegistrationOverlayState extends State<UserRegistrationOverlay> {
     super.dispose();
   }
 
+  Widget _buildTextField(TextEditingController controller, String label, String validationMsg) {
+    return Transform(
+      transform: Matrix4.skewX(-0.05),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: Colors.black, width: 4),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black,
+              offset: Offset(6, 6),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: TextFormField(
+          controller: controller,
+          style: const TextStyle(color: Colors.black, fontSize: 18, fontWeight: FontWeight.bold),
+          decoration: InputDecoration(
+            labelText: label,
+            labelStyle: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w900),
+            floatingLabelStyle: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            border: InputBorder.none,
+          ),
+          validator: (value) => value == null || value.trim().isEmpty ? validationMsg : null,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white));
+      return Container(
+        color: Colors.black,
+        child: const Center(child: CircularProgressIndicator(color: Colors.white)),
+      );
     }
 
-    return Container(
-      color: Colors.black.withValues(alpha: 0.9),
-      child: Center(
-        child: Container(
-          width: 400,
-          padding: const EdgeInsets.all(24.0),
-          decoration: BoxDecoration(
-            color: Colors.blueGrey.shade900,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white, width: 2),
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Stack(
+        children: [
+          // Background Painter (Yellow with halftones & lines)
+          Positioned.fill(
+            child: CustomPaint(
+              painter: ComicBackgroundPainter(),
+            ),
           ),
-          child: Form(
-            key: _formKey,
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'STUDENT REGISTRATION',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
+          
+          // Form Container
+          Center(
+            child: Transform(
+              transform: Matrix4.skewX(-0.05),
+              child: Container(
+                width: 450,
+                padding: const EdgeInsets.all(32.0),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF26E0FF), // Cyan Background
+                  border: Border.all(color: Colors.black, width: 6),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Colors.black,
+                      offset: Offset(12, 12),
+                      blurRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Transform(
+                          transform: Matrix4.skewX(-0.1),
+                          child: Text(
+                            'STUDENT\nREGISTRATION',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.bangers(
+                              color: const Color(0xFFFF2F92), // Magenta
+                              fontSize: 48,
+                              height: 1.0,
+                              letterSpacing: 2.0,
+                              shadows: const [
+                                Shadow(offset: Offset(-2, -2), color: Colors.white),
+                                Shadow(offset: Offset(4, 4), color: Colors.black),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        _buildTextField(_nameController, 'FULL NAME', 'Please enter your name!'),
+                        const SizedBox(height: 24),
+                        _buildTextField(_rollNumberController, 'ROLL NUMBER', 'Please enter your roll number!'),
+                        const SizedBox(height: 32),
+                        ComicButton(
+                          label: 'ENTER AUDITORIUM',
+                          color: const Color(0xFFF5D300), // Yellow
+                          textColor: Colors.black,
+                          icon: Icons.login,
+                          onPressed: _saveAndProceed,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-                  TextFormField(
-                    controller: _nameController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Full Name',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your name' : null,
-                  ),
-                  const SizedBox(height: 16),
-                  TextFormField(
-                    controller: _rollNumberController,
-                    style: const TextStyle(color: Colors.white),
-                    decoration: const InputDecoration(
-                      labelText: 'Roll Number',
-                      labelStyle: TextStyle(color: Colors.grey),
-                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
-                    ),
-                    validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your roll number' : null,
-                  ),
-                  const SizedBox(height: 24),
-                  ElevatedButton(
-                    onPressed: _saveAndProceed,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.blue.shade700,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
-                    ),
-                    child: const Text('ENTER AUDITORIUM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                  ),
-                ],
+                ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

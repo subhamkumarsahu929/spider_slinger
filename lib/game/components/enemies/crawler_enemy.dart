@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import 'enemy.dart';
@@ -28,6 +29,10 @@ class CrawlerEnemy extends Enemy {
       EnemyState.hit: createAnim('$prefix-Hit-Sheet.png', amount: 2, loop: false),
       EnemyState.death: createAnim('$prefix-Death-Sheet.png', amount: 4, loop: false),
     };
+
+    // Tint to match comic aesthetic
+    final tint = crawlerType == CrawlerType.little ? const Color(0xFFFF2F92) : const Color(0xFF3A1C8C);
+    paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcIn);
 
     current = EnemyState.walk;
   }

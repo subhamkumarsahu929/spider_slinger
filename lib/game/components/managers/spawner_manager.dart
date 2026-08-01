@@ -23,6 +23,11 @@ class SpawnerManager extends Component with HasGameReference<SpiderSlingerGame> 
       _venomSpawned = true;
       game.world.add(VenomBoss()
         ..position = Vector2(game.camera.viewfinder.position.x + game.size.x, game.size.y - 150));
+        
+      // Pause game and show Venom Intro Overlay
+      game.pauseEngine();
+      game.overlays.add('VenomIntro');
+      
       return; // Give some time before spawning other enemies, or just let them spawn too.
     }
 

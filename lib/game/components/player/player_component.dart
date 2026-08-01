@@ -6,6 +6,7 @@ import 'web_shot.dart';
 import 'vertical_web.dart';
 import '../environment/platform_block.dart';
 import '../../../config/game_constants.dart';
+import '../effects/hit_text_component.dart';
 import '../../../services/audio_service.dart';
 
 enum PlayerState { idle, running, jumping, hanging, attacking, hurt, swinging }
@@ -470,6 +471,12 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
     isHurt = true;
     hurtTimer = 0.45; // About 3 frames at 0.15s each
     AudioService.playHit();
+    
+    // Spawn comic hit text for player damage!
+    final hitWords = ['OOF!', 'UGH!', 'ARGH!', 'OUCH!', 'YIKES!', 'CRACK!'];
+    final word = hitWords[Random().nextInt(hitWords.length)];
+    game.world.add(HitTextComponent(text: word, position: position.clone()));
+
     if (game.gameState.lives <= 0) {
       AudioService.playGameOver();
     }
