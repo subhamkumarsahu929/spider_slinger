@@ -39,13 +39,13 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
     {
       'title': 'CEILING WEB HANG 🕸️',
       'subtitle': 'Vertical Traverse',
-      'content': '• Jump into the air first!\n• Tap the Blue (HANG) button while in mid-air to shoot a web and hang upside down from the ceiling.',
+      'content': '• Jump into the air first!\n• Press and hold the Purple (SWING) button while in mid-air to shoot a web and hang upside down from the ceiling.',
       'illustration': 'hang',
     },
     {
       'title': 'MOMENTUM SWING 🚀',
       'subtitle': 'Launch Forward',
-      'content': '• While hanging from a ceiling web anchor...\n• Hold the RIGHT button and tap the Purple (SWING) button to launch forward in a massive arc!',
+      'content': '• While hanging from a ceiling web anchor...\n• Hold the RIGHT button and release the Purple (SWING) button to launch forward in a massive arc!',
       'illustration': 'swing',
     },
     {
@@ -120,7 +120,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
           children: [
             _buildButtonRepresentation(Icons.arrow_upward_rounded, Colors.green, 'JUMP'),
             const Icon(Icons.arrow_right_alt, color: Colors.white54, size: 30),
-            _buildButtonRepresentation(Icons.vertical_align_top_rounded, Colors.blue, 'HANG'),
+            _buildButtonRepresentation(Icons.waves_rounded, Colors.purple, 'HOLD SWING'),
           ],
         );
       case 'swing':
@@ -129,7 +129,7 @@ class _TutorialOverlayState extends State<TutorialOverlay> {
           children: [
             _buildButtonRepresentation(Icons.arrow_forward_rounded, Colors.orange, 'HOLD RIGHT'),
             const Icon(Icons.add, color: Colors.white54, size: 24),
-            _buildButtonRepresentation(Icons.waves_rounded, Colors.purple, 'TAP SWING'),
+            _buildButtonRepresentation(Icons.waves_rounded, Colors.purple, 'RELEASE SWING'),
           ],
         );
       case 'combat':
