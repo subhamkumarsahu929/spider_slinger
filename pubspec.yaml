@@ -74,6 +74,7 @@ flutter:
     - assets/images/enemies/Venom.png
     - assets/images/environment/
     - assets/images/icon.png
+    - assets/images/buildings/
 
 flutter_launcher_icons:
   android: true

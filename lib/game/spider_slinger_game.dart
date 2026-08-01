@@ -1,7 +1,7 @@
 import 'package:flame/game.dart';
 import 'state/game_state.dart';
 import 'components/player/player_component.dart';
-import 'components/environment/parallax_bg.dart';
+import 'components/environment/skyline_background.dart';
 import 'components/managers/difficulty_manager.dart';
 import 'components/managers/procedural_spawner.dart';
 import 'components/managers/spawner_manager.dart';
@@ -34,11 +34,12 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
       'enemies/Fly-Enemy/Fly-Enemy-Death-Sheet.png',
       'enemies/Venom.png',
       'environment/platform-template.png',
+      for (final i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14]) 'buildings/build_day_$i.png',
+      for (final i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14]) 'buildings/build_night_$i.png',
     ]);
 
-    // Background (Keep Parallax on game root or world? ParallaxBg usually goes on game root so it fills screen, 
-    // but in Flame 1.9+ we can add it to the background layer. Let's keep it on game root for now)
-    add(ParallaxBg());
+    // Background Skyline
+    add(SkylineBackground());
 
     // Managers
     final difficultyManager = DifficultyManager();

@@ -50,7 +50,7 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
       }
 
       animations = {
-        PlayerState.idle: createAnimation([0, 1]),
+        PlayerState.idle: createAnimation([0]),
         PlayerState.running: createAnimation([2, 3, 5, 6]),
         PlayerState.jumping: createAnimation([8, 9, 12]),
         PlayerState.hanging: createAnimation([18, 19]),
@@ -68,6 +68,19 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
 
   @override
   void update(double dt) {
+    // Update animation state based on previous frame's collision results
+    if (isHurt) {
+      current = PlayerState.hurt;
+    } else if (isAttacking) {
+      current = PlayerState.attacking;
+    } else if (isHanging) {
+      current = PlayerState.hanging;
+    } else if (!isGrounded) {
+      current = PlayerState.jumping;
+    } else {
+      current = horizontalVelocity == 0 ? PlayerState.idle : PlayerState.running;
+    }
+
     super.update(dt);
     
     if (game.gameState.isGameOver) return;
@@ -153,19 +166,6 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
           currentVerticalWeb!.position.x = position.x; // Web moves with player while swinging
         }
       }
-    }
-
-    // Update animation state
-    if (isHurt) {
-      current = PlayerState.hurt;
-    } else if (isAttacking) {
-      current = PlayerState.attacking;
-    } else if (isHanging) {
-      current = PlayerState.hanging;
-    } else if (!isGrounded) {
-      current = PlayerState.jumping;
-    } else {
-      current = horizontalVelocity == 0 ? PlayerState.idle : PlayerState.running;
     }
   }
 

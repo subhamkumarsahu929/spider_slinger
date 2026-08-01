@@ -105,19 +105,27 @@ class GameScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gameState = Provider.of<GameState>(context, listen: false);
-    return Scaffold(
-      body: GameWidget<SpiderSlingerGame>(
-        game: SpiderSlingerGame(gameState: gameState),
-        initialActiveOverlays: const [GameRoutes.registration],
-        overlayBuilderMap: {
-          GameRoutes.registration: (context, game) => UserRegistrationOverlay(game: game),
-          GameRoutes.mainMenu: (context, game) => MainMenuOverlay(game: game),
-          GameRoutes.hud: (context, game) => HudOverlay(game: game),
-          GameRoutes.pauseMenu: (context, game) => PauseMenuOverlay(game: game),
-          GameRoutes.gameOver: (context, game) => GameOverOverlay(game: game),
-        },
-      ),
+    return Selector<GameState, int>(
+      selector: (_, gameState) => gameState.attempts,
+      builder: (context, attempts, child) {
+        final gameState = Provider.of<GameState>(context, listen: false);
+        return Scaffold(
+          body: GameWidget<SpiderSlingerGame>(
+            key: ValueKey(attempts),
+            game: SpiderSlingerGame(gameState: gameState),
+            initialActiveOverlays: [
+              attempts == 0 ? GameRoutes.registration : GameRoutes.mainMenu
+            ],
+            overlayBuilderMap: {
+              GameRoutes.registration: (context, game) => UserRegistrationOverlay(game: game),
+              GameRoutes.mainMenu: (context, game) => MainMenuOverlay(game: game),
+              GameRoutes.hud: (context, game) => HudOverlay(game: game),
+              GameRoutes.pauseMenu: (context, game) => PauseMenuOverlay(game: game),
+              GameRoutes.gameOver: (context, game) => GameOverOverlay(game: game),
+            },
+          ),
+        );
+      },
     );
   }
 }
