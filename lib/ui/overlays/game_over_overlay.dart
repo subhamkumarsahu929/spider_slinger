@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../config/game_routes.dart';
 import '../../game/spider_slinger_game.dart';
 import '../../game/state/game_state.dart';
+import '../widgets/comic_button.dart';
 
 class GameOverOverlay extends StatelessWidget {
   final SpiderSlingerGame game;
@@ -13,50 +15,69 @@ class GameOverOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<GameState>(
       builder: (context, gameState, child) {
-        return Center(
-          child: Container(
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.9),
-              borderRadius: BorderRadius.circular(16),
-              // #11 — Green border on win, red on loss
-              border: Border.all(
-                color: gameState.lives > 0 ? Colors.green : Colors.red,
-                width: 4,
+        return Container(
+          color: Colors.black.withValues(alpha: 0.7),
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(40),
+              decoration: BoxDecoration(
+                color: Colors.white, // Solid white card
+                // #11 — Green border on win, red on loss
+                border: Border.all(
+                  color: gameState.lives > 0 ? Colors.green : const Color(0xFFE23636),
+                  width: 6,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black,
+                    blurRadius: 0,
+                    offset: Offset(8, 8),
+                  ),
+                ],
               ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  gameState.lives > 0 ? 'YOU WIN!' : 'GAME OVER',
-                  style: TextStyle(
-                    color: gameState.lives > 0 ? Colors.green : Colors.red,
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    gameState.lives > 0 ? 'YOU WIN!' : 'GAME OVER',
+                    style: GoogleFonts.bangers(
+                      color: gameState.lives > 0 ? Colors.green : const Color(0xFFE23636),
+                      fontSize: 64,
+                      letterSpacing: 2.0,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  // #10 — Thousands separator
-                  'Final Score: ${_formatScore(gameState.score)}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5D300), // Solid Action Yellow
+                      border: Border.all(color: Colors.black, width: 3),
+                    ),
+                    child: Text(
+                      // #10 — Thousands separator
+                      'FINAL SCORE: ${_formatScore(gameState.score)}',
+                      style: GoogleFonts.bangers(
+                        color: Colors.black,
+                        fontSize: 32,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 32),
-                ElevatedButton(
-                  onPressed: () {
-                    gameState.resetGame();
-                    game.overlays.remove(GameRoutes.gameOver);
-                    // #4 — Tear down the old world so the next game starts fresh
-                    game.resetWorld();
-                    game.overlays.add(GameRoutes.mainMenu);
-                  },
-                  child: const Text('Return to Menu', style: TextStyle(fontSize: 24)),
-                ),
-              ],
+                  const SizedBox(height: 48),
+                  ComicButton(
+                    label: 'RETURN TO MENU',
+                    color: const Color(0xFF0B3D91), // Deep Blue
+                    icon: Icons.replay,
+                    onPressed: () {
+                      gameState.resetGame();
+                      game.overlays.remove(GameRoutes.gameOver);
+                      // #4 — Tear down the old world so the next game starts fresh
+                      game.resetWorld();
+                      game.overlays.add(GameRoutes.mainMenu);
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
         );

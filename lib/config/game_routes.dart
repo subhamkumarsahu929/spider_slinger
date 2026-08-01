@@ -6,4 +6,6 @@ class GameRoutes {
   static const String gameOver = 'GameOver';
   static const String tutorial = 'Tutorial';
   static const String leaderboardRoute = '/leaderboard';
+  static const String venomIntro = 'VenomIntro';
+  static const String howToPlay = 'HowToPlay';
 }

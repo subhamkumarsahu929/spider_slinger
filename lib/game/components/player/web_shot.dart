@@ -24,21 +24,24 @@ class WebShot extends PositionComponent with HasGameReference<SpiderSlingerGame>
 
   @override
   void render(Canvas canvas) {
-    // #12 — Draw an oval web blob with a centre thread for a more web-like look
     final cx = size.x / 2;
     final cy = size.y / 2;
-    // Filled oval
+    final rect = Rect.fromCenter(center: Offset(cx, cy), width: size.x, height: size.y * 0.7);
+
+    // Thick black outline
     canvas.drawOval(
-      Rect.fromCenter(center: Offset(cx, cy), width: size.x, height: size.y * 0.55),
-      Paint()..color = const Color(0xFFF5F5F5),
-    );
-    // Centre thread line
-    canvas.drawLine(
-      Offset(0, cy),
-      Offset(size.x, cy),
+      rect,
       Paint()
-        ..color = const Color(0xFFBBBBBB)
-        ..strokeWidth = 1.5,
+        ..color = Colors.black
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 3.0,
+    );
+    // Solid white fill
+    canvas.drawOval(
+      rect,
+      Paint()
+        ..color = Colors.white
+        ..style = PaintingStyle.fill,
     );
   }
 

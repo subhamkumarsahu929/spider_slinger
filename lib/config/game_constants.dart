@@ -33,7 +33,7 @@ class GameConstants {
 
   // Difficulty limits
   static const double phase1Duration = 30.0;
-  static const double phase2Duration = 90.0;
+  static const double phase2Duration = 45.0;
   
   // Damage
   static const int webShotDamage = 1;

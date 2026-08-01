@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import '../../spider_slinger_game.dart';
@@ -44,8 +45,33 @@ class HazardBlock extends SpriteComponent with HasGameReference<SpiderSlingerGam
       srcSize: srcSz,
     );
     
-    // Add hitbox for damage
-    add(RectangleHitbox()..collisionType = CollisionType.passive);
+    // Tint the spikes bold crimson to stand out
+    paint.colorFilter = const ColorFilter.mode(Color(0xFFFF3B3B), BlendMode.srcIn);
+    
+    // Add a tighter hitbox for fairer dodging
+    Vector2 hitboxSize = Vector2(10, 10);
+    Vector2 hitboxPos = Vector2(3, 3);
+    
+    switch (direction) {
+      case SpikeDirection.up:
+        hitboxSize = Vector2(10, 8);
+        hitboxPos = Vector2(3, 8);
+        break;
+      case SpikeDirection.down:
+        hitboxSize = Vector2(10, 8);
+        hitboxPos = Vector2(3, 0);
+        break;
+      case SpikeDirection.left:
+        hitboxSize = Vector2(8, 10);
+        hitboxPos = Vector2(8, 3);
+        break;
+      case SpikeDirection.right:
+        hitboxSize = Vector2(8, 10);
+        hitboxPos = Vector2(0, 3);
+        break;
+    }
+    
+    add(RectangleHitbox(size: hitboxSize, position: hitboxPos)..collisionType = CollisionType.passive);
   }
 
   @override

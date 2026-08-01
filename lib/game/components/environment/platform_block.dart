@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import '../../spider_slinger_game.dart';
@@ -55,8 +56,24 @@ class PlatformBlock extends SpriteComponent with HasGameReference<SpiderSlingerG
       srcSize: srcSz,
     );
     
+    // Tint the entire platform solid Ink to match the comic silhouette aesthetic
+    paint.colorFilter = const ColorFilter.mode(Color(0xFF08070C), BlendMode.srcIn);
+    
     // Make ground solid
     add(RectangleHitbox()..collisionType = CollisionType.passive);
+  }
+
+  @override
+  void render(Canvas canvas) {
+    super.render(canvas);
+    // Draw a stark, bright stroke along the top edge of the platform
+    // to give it a comic panel/action outline look.
+    final topBorderPaint = Paint()
+      ..color = const Color(0xFF26E0FF).withValues(alpha: 0.3) // Cyan outline (dimmed to reduce brightness)
+      ..strokeWidth = 3.0
+      ..style = PaintingStyle.stroke;
+      
+    canvas.drawLine(const Offset(0, 0), Offset(size.x, 0), topBorderPaint);
   }
 
   @override

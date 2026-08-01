@@ -3,6 +3,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../game/spider_slinger_game.dart';
 import '../../config/game_routes.dart';
 import '../../services/audio_service.dart';
+import '../widgets/virtual_button.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 class TutorialOverlay extends StatefulWidget {
   final SpiderSlingerGame game;
@@ -13,241 +15,215 @@ class TutorialOverlay extends StatefulWidget {
   State<TutorialOverlay> createState() => _TutorialOverlayState();
 }
 
-class _TutorialOverlayState extends State<TutorialOverlay> {
+class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProviderStateMixin {
   int _currentStep = 0;
+  late AnimationController _pulseController;
+  late Animation<double> _pulseAnimation;
 
   @override
   void initState() {
     super.initState();
-    // Pause the game while the tutorial is showing so the player doesn't die in the background
     widget.game.pauseEngine();
-  }
-
-  final List<Map<String, dynamic>> _steps = [
-    {
-      'title': 'WELCOME TO SPIDER-SLINGER 🕸️',
-      'subtitle': 'Traverse, Swing, Combat, and Survive!',
-      'content': 'Take control of Spider-Man in a procedural 2D platformer. Swing from ceilings, dodge deadly hazards, and defeat waves of enemies leading up to Venom!',
-      'illustration': 'intro',
-    },
-    {
-      'title': 'RUNNING & JUMPING 🏃',
-      'subtitle': 'Basic Controls',
-      'content': '• Hold Left/Right Orange buttons to run.\n• Tap the Green button to jump over spikes and deep pits.',
-      'illustration': 'movement',
-    },
-    {
-      'title': 'CEILING WEB HANG 🕸️',
-      'subtitle': 'Vertical Traverse',
-      'content': '• Jump into the air first!\n• Tap the Blue (HANG) button while in mid-air to shoot a web and hang upside down from the ceiling.',
-      'illustration': 'hang',
-    },
-    {
-      'title': 'MOMENTUM SWING 🚀',
-      'subtitle': 'Launch Forward',
-      'content': '• While hanging from a ceiling web anchor...\n• Hold the RIGHT button and tap the Purple (SWING) button to launch forward in a massive arc!',
-      'illustration': 'swing',
-    },
-    {
-      'title': 'WEB SHOOTING 💥',
-      'subtitle': 'Combat System',
-      'content': '• Tap the Red (SHOOT) button to fire web projectiles.\n• Take down crawling enemies, airborne flies, and deal damage to Venom!',
-      'illustration': 'combat',
-    },
-  ];
-
-  Widget _buildStepIndicator() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(_steps.length, (index) {
-        return Container(
-          width: 10,
-          height: 10,
-          margin: const EdgeInsets.symmetric(horizontal: 6),
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: _currentStep == index ? Colors.redAccent.shade700 : Colors.grey.shade600,
-          ),
-        );
-      }),
+    
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    )..repeat(reverse: true);
+    
+    _pulseAnimation = Tween<double>(begin: 1.0, end: 1.15).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
 
-  Widget _buildButtonRepresentation(IconData icon, Color color, String label) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 50,
-          height: 50,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            color: color.withValues(alpha: 0.35),
-            border: Border.all(color: Colors.white, width: 1.5),
-            boxShadow: [
-              BoxShadow(color: color.withValues(alpha: 0.4), blurRadius: 6),
-            ],
-          ),
-          child: Icon(icon, color: Colors.white, size: 24),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(color: Colors.white70, fontSize: 10, fontWeight: FontWeight.bold),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildIllustration(String type) {
-    switch (type) {
-      case 'intro':
-        return const Icon(Icons.sports_esports_outlined, color: Colors.redAccent, size: 80);
-      case 'movement':
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildButtonRepresentation(Icons.arrow_back_rounded, Colors.orange, 'LEFT'),
-            const SizedBox(width: 16),
-            _buildButtonRepresentation(Icons.arrow_forward_rounded, Colors.orange, 'RIGHT'),
-            const SizedBox(width: 32),
-            _buildButtonRepresentation(Icons.arrow_upward_rounded, Colors.green, 'JUMP'),
-          ],
-        );
-      case 'hang':
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildButtonRepresentation(Icons.arrow_upward_rounded, Colors.green, 'JUMP'),
-            const Icon(Icons.arrow_right_alt, color: Colors.white54, size: 30),
-            _buildButtonRepresentation(Icons.vertical_align_top_rounded, Colors.blue, 'HANG'),
-          ],
-        );
-      case 'swing':
-        return Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildButtonRepresentation(Icons.arrow_forward_rounded, Colors.orange, 'HOLD RIGHT'),
-            const Icon(Icons.add, color: Colors.white54, size: 24),
-            _buildButtonRepresentation(Icons.waves_rounded, Colors.purple, 'TAP SWING'),
-          ],
-        );
-      case 'combat':
-        return _buildButtonRepresentation(Icons.gps_fixed_rounded, Colors.red, 'SHOOT');
-      default:
-        return const SizedBox();
-    }
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    super.dispose();
   }
 
   Future<void> _completeTutorial() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('tutorial_completed', true);
     widget.game.overlays.remove(GameRoutes.tutorial);
-    // Resume the game now that the tutorial is dismissed
-    widget.game.overlays.add(GameRoutes.hud);
+    // The HUD was placed beneath us; just resume the game!
     widget.game.resumeEngine();
     AudioService.initialize();
+  }
+  
+  void _advanceStep() {
+    if (_currentStep < 5) {
+      setState(() => _currentStep++);
+    } else {
+      _completeTutorial();
+    }
+  }
+
+  Widget _buildTooltip(String title, String subtitle, {double? top, double? bottom, double? left, double? right, Color? bgColor}) {
+    final backgroundColor = bgColor ?? Colors.white;
+    return Positioned(
+      top: top, bottom: bottom, left: left, right: right,
+      child: Transform(
+        transform: Matrix4.skewX(-0.1)..rotateZ(-0.02),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            border: Border.all(color: Colors.black, width: 6),
+            boxShadow: const [
+              BoxShadow(color: Colors.black, offset: Offset(10, 10)),
+              BoxShadow(color: Color(0xFF26E0FF), offset: Offset(-6, -6)), // Cyan pop
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                title.toUpperCase(),
+                style: GoogleFonts.bangers(
+                  fontSize: 38,
+                  letterSpacing: 2.0,
+                  color: const Color(0xFFFF3B3B), // Crimson title
+                  shadows: const [
+                    Shadow(offset: Offset(3, 3), color: Colors.black),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                subtitle,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.black,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTargetButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required bool isTarget,
+  }) {
+    final btn = VirtualButton(
+      icon: icon,
+      label: label,
+      color: color,
+      onPointerDown: isTarget ? _advanceStep : null,
+    );
+
+    return IgnorePointer(
+      ignoring: !isTarget,
+      child: Opacity(
+        opacity: isTarget ? 1.0 : 0.0, // Invisible if not the target, but takes up space!
+        child: isTarget
+            ? ScaleTransition(scale: _pulseAnimation, child: btn)
+            : btn,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final stepData = _steps[_currentStep];
-
-    return Container(
-      color: Colors.black.withValues(alpha: 0.85),
-      child: Center(
-        child: Container(
-          width: 580,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.blueGrey.shade900,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 2),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.5),
-                blurRadius: 15,
-                spreadRadius: 2,
-              )
-            ],
-          ),
-          child: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+    return GestureDetector(
+      // Allow tapping anywhere ONLY for intro and outro steps
+      onTap: (_currentStep == 0 || _currentStep == 5) ? _advanceStep : null,
+      child: Container(
+        color: Colors.black.withValues(alpha: 0.7),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Stack(
               children: [
-                Text(
-                  stepData['title'],
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  stepData['subtitle'],
-                  style: TextStyle(
-                    color: Colors.redAccent.shade100,
-                    fontSize: 14,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Container(
-                  height: 90,
-                  alignment: Alignment.center,
-                  child: _buildIllustration(stepData['illustration']),
-                ),
-                const SizedBox(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    stepData['content'],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 15,
-                      height: 1.4,
+                // Step 0: Welcome
+                if (_currentStep == 0)
+                  Center(
+                    child: _buildTooltip(
+                      'WELCOME TO INSECT BLITZ', 
+                      'Tap anywhere to begin the interactive tutorial!',
+                      bgColor: const Color(0xFFFFF59D), // Light yellow
                     ),
                   ),
+
+                // Left side mock HUD layout
+                if (_currentStep == 1) ...[
+                  _buildTooltip('RUN RIGHT', 'Tap the highlighted RIGHT arrow to move.', bottom: 90, left: 0, bgColor: const Color(0xFFE1BEE7)), // Light purple
+                ],
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTargetButton(
+                        icon: Icons.arrow_back_rounded,
+                        label: 'LEFT',
+                        color: const Color(0xFF0B3D91),
+                        isTarget: false, // We only teach RIGHT for simplicity
+                      ),
+                      const SizedBox(width: 24),
+                      _buildTargetButton(
+                        icon: Icons.arrow_forward_rounded,
+                        label: 'RIGHT',
+                        color: const Color(0xFF0B3D91),
+                        isTarget: _currentStep == 1,
+                      ),
+                    ],
+                  ),
                 ),
-                const SizedBox(height: 28),
-                _buildStepIndicator(),
-                const SizedBox(height: 24),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    TextButton(
-                      onPressed: _completeTutorial,
-                      child: const Text(
-                        'SKIP TUTORIAL',
-                        style: TextStyle(color: Colors.grey, fontSize: 14, fontWeight: FontWeight.bold),
+
+                // Right side mock HUD layout
+                if (_currentStep == 2)
+                  _buildTooltip('JUMP', 'Tap the highlighted JUMP button\nto leap over pits and hazards.', bottom: 90, right: 280, bgColor: const Color(0xFFC8E6C9)), // Light green
+                if (_currentStep == 3)
+                  _buildTooltip('SWING', 'While in the air, tap SWING\nto launch yourself forward on a web.', bottom: 90, right: 0, bgColor: const Color(0xFFB3E5FC)), // Light blue
+                if (_currentStep == 4)
+                  _buildTooltip('SHOOT WEBS', 'Tap SHOOT to blast enemies.', bottom: 90, right: 140, bgColor: const Color(0xFFFFCCBC)), // Light red
+
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildTargetButton(
+                        icon: Icons.arrow_upward_rounded,
+                        label: 'JUMP',
+                        color: const Color(0xFFFFD23F), // Gold
+                        isTarget: _currentStep == 2,
                       ),
+                      const SizedBox(width: 24),
+                      _buildTargetButton(
+                        icon: Icons.gps_fixed_rounded,
+                        label: 'SHOOT',
+                        color: const Color(0xFFFF3B3B), // Crimson
+                        isTarget: _currentStep == 4,
+                      ),
+                      const SizedBox(width: 24),
+                      _buildTargetButton(
+                        icon: Icons.waves_rounded,
+                        label: 'SWING',
+                        color: const Color(0xFF3A1C8C), // Indigo
+                        isTarget: _currentStep == 3,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Step 5: Finish
+                if (_currentStep == 5)
+                  Center(
+                    child: _buildTooltip(
+                      'YOU ARE READY!', 
+                      'Tap anywhere to start the game. Good luck!',
+                      bgColor: const Color(0xFFFFF59D), // Light yellow
                     ),
-                    ElevatedButton(
-                      onPressed: () {
-                        if (_currentStep < _steps.length - 1) {
-                          setState(() {
-                            _currentStep++;
-                          });
-                        } else {
-                          _completeTutorial();
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.redAccent.shade700,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                      ),
-                      child: Text(
-                        _currentStep < _steps.length - 1 ? 'NEXT' : 'LET\'S PLAY!',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                )
+                  ),
               ],
             ),
           ),

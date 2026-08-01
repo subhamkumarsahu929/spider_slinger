@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import 'enemy.dart';
@@ -28,6 +29,9 @@ class AirborneEnemy extends Enemy {
       EnemyState.hit:    createAnim('$prefix-Hit-Sheet.png', amount: 2, loop: false),
       EnemyState.death:  createAnim('$prefix-Death-Sheet.png', amount: 4, loop: false),
     };
+
+    // Tint Cyan
+    paint.colorFilter = const ColorFilter.mode(Color(0xFF26E0FF), BlendMode.srcIn);
 
     current = EnemyState.idle;
   }

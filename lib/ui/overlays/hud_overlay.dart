@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import '../../game/spider_slinger_game.dart';
 import '../../game/state/game_state.dart';
@@ -6,6 +7,7 @@ import '../../config/game_routes.dart';
 import '../../config/game_constants.dart';
 import '../widgets/heart_counter.dart';
 import '../widgets/virtual_button.dart';
+import '../widgets/comic_burst_painter.dart';
 
 class HudOverlay extends StatelessWidget {
   final SpiderSlingerGame game;
@@ -26,121 +28,184 @@ class HudOverlay extends StatelessWidget {
         
         return SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
+            padding: const EdgeInsets.all(24.0),
+            child: Stack(
               children: [
-                Row(
-                  children: [
-                    HeartCounter(lives: gameState.lives, maxLives: GameConstants.maxLives),
-                    const Spacer(),
-                    if (gameState.isInvulnerable) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent.shade700.withValues(alpha: 0.85),
-                          borderRadius: BorderRadius.circular(10),
-                          border: Border.all(color: Colors.white, width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.redAccent.withValues(alpha: 0.4),
-                              blurRadius: 6,
-                            ),
-                          ],
+                // Top Left: Hearts
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  child: HeartCounter(lives: gameState.lives, maxLives: GameConstants.maxLives),
+                ),
+
+                // Top Center: Score Burst
+                Align(
+                  alignment: Alignment.topCenter,
+                  child: SizedBox(
+                    width: 200,
+                    height: 120,
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        CustomPaint(
+                          size: const Size(200, 120),
+                          painter: ComicBurstPainter(),
                         ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.shield_rounded, color: Colors.white, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              'SHIELD: ${gameState.invulnerabilityTime.toStringAsFixed(1)}s',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                fontFamily: 'Courier',
+                        Transform(
+                          transform: Matrix4.skewX(-0.1)..rotateZ(-0.05),
+                          child: Text(
+                            _formatScore(gameState.score),
+                            style: GoogleFonts.bangers(
+                              color: Colors.white,
+                              fontSize: 44,
+                              letterSpacing: 2.0,
+                              shadows: const [
+                                Shadow(offset: Offset(2, 2), color: Colors.black),
+                                Shadow(offset: Offset(-2, -2), color: Colors.black),
+                                Shadow(offset: Offset(4, 4), color: Colors.black),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // Top Right: Pause & Shield
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: Row(
+                    children: [
+                      if (gameState.isInvulnerable) ...[
+                        Transform(
+                          transform: Matrix4.skewX(-0.1),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF26E0FF), // Cyan
+                              border: Border.all(color: Colors.black, width: 4),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  blurRadius: 0,
+                                  offset: Offset(4, 4),
+                                ),
+                              ],
+                            ),
+                            child: Transform(
+                              transform: Matrix4.skewX(0.1),
+                              child: Text(
+                                'SHIELD: ${gameState.invulnerabilityTime.toStringAsFixed(1)}s',
+                                style: GoogleFonts.bangers(
+                                  color: Colors.black,
+                                  fontSize: 20,
+                                  letterSpacing: 1.0,
+                                ),
                               ),
                             ),
-                          ],
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                      ],
+                      GestureDetector(
+                        onTap: () {
+                          game.pauseEngine();
+                          game.overlays.remove(GameRoutes.hud);
+                          game.overlays.add(GameRoutes.pauseMenu);
+                        },
+                        child: Transform(
+                          transform: Matrix4.skewX(-0.1),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFFFF3B3B), // Crimson
+                              border: Border.all(color: Colors.black, width: 4),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black,
+                                  blurRadius: 0,
+                                  offset: Offset(4, 4),
+                                ),
+                              ],
+                            ),
+                            child: Transform(
+                              transform: Matrix4.skewX(0.1),
+                              child: Text(
+                                'PAUSE',
+                                style: GoogleFonts.bangers(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  letterSpacing: 2.0,
+                                  shadows: const [
+                                    Shadow(offset: Offset(2, 2), color: Colors.black),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 16),
                     ],
-                    Text(
-                      // #10 — Thousands separator (12500 → 12,500)
-                      'Score: ${_formatScore(gameState.score)}',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Courier',
-                        shadows: [Shadow(blurRadius: 4, color: Colors.black)],
-                      ),
-                    ),
-                    const Spacer(),
-                    IconButton(
-                      icon: const Icon(Icons.pause, color: Colors.white, size: 32),
-                      onPressed: () {
-                        game.pauseEngine();
-                        game.overlays.remove(GameRoutes.hud);
-                        game.overlays.add(GameRoutes.pauseMenu);
-                      },
-                    ),
-                  ],
+                  ),
                 ),
-                const Spacer(),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        VirtualButton(
-                          icon: Icons.arrow_back_rounded,
-                          label: 'LEFT',
-                          color: Colors.orange,
-                          onPointerDown: game.startMovingLeft,
-                          onPointerUp: game.stopMoving,
-                        ),
-                        const SizedBox(width: 16),
-                        VirtualButton(
-                          icon: Icons.arrow_forward_rounded,
-                          label: 'RIGHT',
-                          color: Colors.orange,
-                          onPointerDown: game.startMovingRight,
-                          onPointerUp: game.stopMoving,
-                        ),
-                      ],
-                    ),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        VirtualButton(
-                          icon: Icons.arrow_upward_rounded,
-                          label: 'JUMP',
-                          color: Colors.green,
-                          onPointerDown: game.jump,
-                          onPointerUp: game.onJumpReleased,
-                        ),
-                        const SizedBox(width: 24),
-                        VirtualButton(
-                          icon: Icons.gps_fixed_rounded,
-                          label: 'SHOOT',
-                          color: Colors.red,
-                          onPressed: game.shootHorizontalWeb,
-                        ),
-                        const SizedBox(width: 16),
-                        VirtualButton(
-                          icon: Icons.waves_rounded,
-                          label: 'SWING',
-                          color: Colors.purple,
-                          onPointerDown: game.shootVerticalWeb,
-                          onPointerUp: game.triggerSwing,
-                        ),
-                      ],
-                    ),
-                  ],
+
+                // Bottom Left Controls
+                Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      VirtualButton(
+                        icon: Icons.arrow_back_rounded,
+                        label: 'LEFT',
+                        color: const Color(0xFF0B3D91), // Deep Blue
+                        onPointerDown: game.startMovingLeft,
+                        onPointerUp: game.stopMoving,
+                      ),
+                      const SizedBox(width: 24),
+                      VirtualButton(
+                        icon: Icons.arrow_forward_rounded,
+                        label: 'RIGHT',
+                        color: const Color(0xFF0B3D91), // Deep Blue
+                        onPointerDown: game.startMovingRight,
+                        onPointerUp: game.stopMoving,
+                      ),
+                    ],
+                  ),
+                ),
+
+                // Bottom Right Controls
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      VirtualButton(
+                        icon: Icons.arrow_upward_rounded,
+                        label: 'JUMP',
+                        color: const Color(0xFFFFD23F), // Gold
+                        onPointerDown: game.jump,
+                        onPointerUp: game.onJumpReleased,
+                      ),
+                      const SizedBox(width: 24),
+                      VirtualButton(
+                        icon: Icons.gps_fixed_rounded,
+                        label: 'SHOOT',
+                        color: const Color(0xFFFF3B3B), // Crimson
+                        onPressed: game.shootHorizontalWeb,
+                      ),
+                      const SizedBox(width: 24),
+                      VirtualButton(
+                        icon: Icons.waves_rounded,
+                        label: 'SWING',
+                        color: const Color(0xFF3A1C8C), // Indigo
+                        onPointerDown: game.shootVerticalWeb,
+                        onPointerUp: game.triggerSwing,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
