@@ -53,9 +53,11 @@ class _UserRegistrationOverlayState extends State<UserRegistrationOverlay> {
   }
 
   void _updateGameStateAndProceed(String name, String rollNumber) {
-    widget.game.gameState.setStudentInfo(name, rollNumber);
-    widget.game.overlays.remove(GameRoutes.registration);
-    widget.game.overlays.add(GameRoutes.mainMenu);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.game.gameState.setStudentInfo(name, rollNumber);
+      widget.game.overlays.remove(GameRoutes.registration);
+      widget.game.overlays.add(GameRoutes.mainMenu);
+    });
   }
 
   @override
@@ -84,52 +86,54 @@ class _UserRegistrationOverlayState extends State<UserRegistrationOverlay> {
           ),
           child: Form(
             key: _formKey,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'STUDENT REGISTRATION',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'STUDENT REGISTRATION',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _nameController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Full Name',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                  const SizedBox(height: 20),
+                  TextFormField(
+                    controller: _nameController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Full Name',
+                      labelStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                    ),
+                    validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your name' : null,
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your name' : null,
-                ),
-                const SizedBox(height: 16),
-                TextFormField(
-                  controller: _rollNumberController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: const InputDecoration(
-                    labelText: 'Roll Number',
-                    labelStyle: TextStyle(color: Colors.grey),
-                    enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                    focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _rollNumberController,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: const InputDecoration(
+                      labelText: 'Roll Number',
+                      labelStyle: TextStyle(color: Colors.grey),
+                      enabledBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                      focusedBorder: OutlineInputBorder(borderSide: BorderSide(color: Colors.white)),
+                    ),
+                    validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your roll number' : null,
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty ? 'Please enter your roll number' : null,
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: _saveAndProceed,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue.shade700,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                  const SizedBox(height: 24),
+                  ElevatedButton(
+                    onPressed: _saveAndProceed,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue.shade700,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                    ),
+                    child: const Text('ENTER AUDITORIUM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   ),
-                  child: const Text('ENTER AUDITORIUM', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

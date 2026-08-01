@@ -4,5 +4,6 @@ class GameRoutes {
   static const String hud = 'HUD';
   static const String pauseMenu = 'PauseMenu';
   static const String gameOver = 'GameOver';
+  static const String tutorial = 'Tutorial';
   static const String leaderboardRoute = '/leaderboard';
 }

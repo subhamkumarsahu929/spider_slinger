@@ -1,4 +1,5 @@
-import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
+import 'package:flutter/widgets.dart';
 import '../../config/game_constants.dart';
 import '../../models/app_user_model.dart';
 import '../../models/user_score_model.dart';
@@ -25,6 +26,7 @@ class GameState extends ChangeNotifier {
   int _lives = GameConstants.maxLives;
   bool _isGameOver = false;
   bool _isInvulnerable = false;
+  double _invulnerabilityTime = 0.0;
   AppUser? _currentUser;
   String? studentName;
   String? rollNumber;
@@ -39,6 +41,7 @@ class GameState extends ChangeNotifier {
   int get lives => _lives;
   bool get isGameOver => _isGameOver;
   bool get isInvulnerable => _isInvulnerable;
+  double get invulnerabilityTime => _invulnerabilityTime;
   AppUser? get currentUser => _currentUser;
   int get attempts => _attempts;
 
@@ -76,7 +79,8 @@ class GameState extends ChangeNotifier {
       _lives = 0;
       _triggerGameOver();
     } else {
-      _triggerInvulnerability();
+      _isInvulnerable = true;
+      _invulnerabilityTime = GameConstants.invulnerabilityDuration;
     }
     notifyListeners();
   }
@@ -87,6 +91,7 @@ class GameState extends ChangeNotifier {
     _lives = GameConstants.maxLives;
     _isGameOver = false;
     _isInvulnerable = false;
+    _invulnerabilityTime = 0.0;
     _attempts++;
     notifyListeners();
   }
@@ -126,21 +131,41 @@ class GameState extends ChangeNotifier {
     }
   }
 
-  // ── _triggerInvulnerability ────────────────────────────────────────────────
-  // Gives the player a brief shield after taking damage.
-  void _triggerInvulnerability() {
-    _isInvulnerable = true;
-    notifyListeners();
-    Future.delayed(
-      Duration(
-        milliseconds:
-            (GameConstants.invulnerabilityDuration * 1000).toInt(),
-      ),
-      () {
+  // ── updateInvulnerability ──────────────────────────────────────────────────
+  // Ticks down the invulnerability countdown.
+  void updateInvulnerability(double dt) {
+    if (_isInvulnerable && !_isGameOver) {
+      _invulnerabilityTime -= dt;
+      if (_invulnerabilityTime <= 0) {
+        _invulnerabilityTime = 0.0;
         _isInvulnerable = false;
-        notifyListeners();
-      },
-    );
+      }
+      notifyListeners();
+    }
+  }
+
+  bool _notificationScheduled = false;
+
+  @override
+  void notifyListeners() {
+    if (_notificationScheduled) return;
+
+    final scheduler = WidgetsBinding.instance;
+    if (scheduler.schedulerPhase == SchedulerPhase.postFrameCallbacks) {
+      super.notifyListeners();
+    } else if (scheduler.schedulerPhase == SchedulerPhase.idle) {
+      _notificationScheduled = true;
+      Future.microtask(() {
+        _notificationScheduled = false;
+        super.notifyListeners();
+      });
+    } else {
+      _notificationScheduled = true;
+      scheduler.addPostFrameCallback((_) {
+        _notificationScheduled = false;
+        super.notifyListeners();
+      });
+    }
   }
 }
 

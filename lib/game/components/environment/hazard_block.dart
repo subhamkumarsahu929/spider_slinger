@@ -58,9 +58,11 @@ class HazardBlock extends SpriteComponent with HasGameReference<SpiderSlingerGam
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
-    if (other is PlayerComponent) {
-      game.gameState.takeDamage();
-    }
     super.onCollisionStart(intersectionPoints, other);
+    if (other is PlayerComponent) {
+      if (!game.gameState.isInvulnerable) {
+        other.hit();
+      }
+    }
   }
 }

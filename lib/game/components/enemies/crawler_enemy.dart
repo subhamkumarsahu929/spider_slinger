@@ -7,13 +7,15 @@ enum CrawlerType { little, tall }
 class CrawlerEnemy extends Enemy {
   final CrawlerType crawlerType;
 
-  CrawlerEnemy({required double speed, required this.crawlerType}) 
-      : super(type: EnemyType.crawler, speed: speed, size: Vector2(96, 64));
+  CrawlerEnemy({required super.speed, required this.crawlerType}) 
+      : super(type: EnemyType.crawler, size: Vector2(96, 64));
 
   @override
   Future<void> onLoad() async {
     await super.onLoad();
-    add(RectangleHitbox());
+    useGravity = true; // #6 — Crawlers should fall and land on platforms
+    // Tighten crawler hitbox (Sprite size is 96x64, real visual is smaller)
+    add(RectangleHitbox(size: Vector2(60, 40), position: Vector2(18, 24)));
 
     final String prefix = crawlerType == CrawlerType.little ? 'enemies/Little-Enemy/Little-Enemy' : 'enemies/Tall-Enemy/Tall-Enemy';
 

@@ -17,9 +17,13 @@ class GameOverOverlay extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.9),
+              color: Colors.black.withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.red, width: 4),
+              // #11 — Green border on win, red on loss
+              border: Border.all(
+                color: gameState.lives > 0 ? Colors.green : Colors.red,
+                width: 4,
+              ),
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -34,7 +38,8 @@ class GameOverOverlay extends StatelessWidget {
                 ),
                 const SizedBox(height: 16),
                 Text(
-                  'Final Score: ${gameState.score}',
+                  // #10 — Thousands separator
+                  'Final Score: ${_formatScore(gameState.score)}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 24,
@@ -44,9 +49,9 @@ class GameOverOverlay extends StatelessWidget {
                 ElevatedButton(
                   onPressed: () {
                     gameState.resetGame();
-                    // Just removing all components and reloading the engine might be needed,
-                    // but for now, we'll reset state and go to main menu.
                     game.overlays.remove(GameRoutes.gameOver);
+                    // #4 — Tear down the old world so the next game starts fresh
+                    game.resetWorld();
                     game.overlays.add(GameRoutes.mainMenu);
                   },
                   child: const Text('Return to Menu', style: TextStyle(fontSize: 24)),
@@ -57,5 +62,16 @@ class GameOverOverlay extends StatelessWidget {
         );
       },
     );
+  }
+
+  /// Formats an integer with thousands separators: 12500 → 12,500
+  static String _formatScore(int score) {
+    final s = score.toString();
+    final buf = StringBuffer();
+    for (int i = 0; i < s.length; i++) {
+      if (i > 0 && (s.length - i) % 3 == 0) buf.write(',');
+      buf.write(s[i]);
+    }
+    return buf.toString();
   }
 }

@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../../spider_slinger_game.dart';
 import '../player/player_component.dart';
 
-class FinishLine extends PositionComponent with HasGameRef<SpiderSlingerGame>, CollisionCallbacks {
+class FinishLine extends PositionComponent with HasGameReference<SpiderSlingerGame>, CollisionCallbacks {
   FinishLine({required Vector2 position, required Vector2 size})
       : super(position: position, size: size);
 
@@ -23,7 +23,7 @@ class FinishLine extends PositionComponent with HasGameRef<SpiderSlingerGame>, C
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is PlayerComponent) {
-      gameRef.gameState.triggerWin();
+      game.gameState.triggerWin();
     }
   }
 }
