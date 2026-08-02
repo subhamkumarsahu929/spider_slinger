@@ -29,6 +29,9 @@ void main() async {
     DeviceOrientation.landscapeRight,
   ]);
 
+  // Hide status bar and system navigation overlay for immersive game experience
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
   // ✅ STEP B: Initialize Firebase before runApp().
   // DefaultFirebaseOptions comes from the auto-generated firebase_options.dart.
   // This MUST be awaited — nothing Firebase-related works until this completes.
