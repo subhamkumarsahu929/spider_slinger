@@ -19,15 +19,22 @@ class _SplashScreenState extends State<SplashScreen> {
     super.initState();
     _controller = VideoPlayerController.asset('assets/splash.mp4');
     
+    // Hard timeout: regardless of what happens, jump to the game after 5 seconds.
+    // This rescues iOS users if Safari permanently blocks video initialization.
+    Future.delayed(const Duration(seconds: 5), () {
+      _navigateToGame();
+    });
+
     // Wait for BOTH the video to load AND exactly 3.5 seconds to pass
     Future.wait([
       _controller.initialize(),
       Future.delayed(const Duration(milliseconds: 3500)),
-    ]).then((_) {
+    ]).then((_) async {
       if (mounted) {
         setState(() {
           _isVideoInitialized = true;
         });
+        await _controller.setVolume(0.0); // Required for iOS Safari autoplay
         _controller.play();
       }
     }).catchError((e) {

@@ -1,12 +1,12 @@
 {
-    "name": "flutter_application_1",
-    "short_name": "flutter_application_1",
+    "name": "Spiderman: Web Slinger",
+    "short_name": "Web Slinger",
     "start_url": ".",
-    "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
+    "display": "fullscreen",
+    "background_color": "#000000",
+    "theme_color": "#000000",
     "description": "A new Flutter project.",
-    "orientation": "portrait-primary",
+    "orientation": "landscape",
     "prefer_related_applications": false,
     "icons": [
         {

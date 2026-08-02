@@ -98,6 +98,38 @@ class _SpiderSlingerAppState extends State<SpiderSlingerApp> {
         primarySwatch: Colors.blue,
         fontFamily: 'Courier',
       ),
+      builder: (context, child) {
+        return MediaQuery.of(context).orientation == Orientation.portrait
+            ? Scaffold(
+                backgroundColor: Colors.black,
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.screen_rotation, size: 64, color: Colors.white),
+                      const SizedBox(height: 24),
+                      const Text(
+                        'PLEASE ROTATE',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.white, 
+                          fontSize: 32, 
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2.0,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        'This game requires landscape mode.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
+              )
+            : child!;
+      },
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),

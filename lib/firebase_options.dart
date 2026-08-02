@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -59,6 +56,14 @@ class DefaultFirebaseOptions {
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyD06shvCFtMPjV8jglunhi4qgE5CzWLU_w',
     appId: '1:89150861980:android:8a828bb763af7a95f67359',
+    messagingSenderId: '89150861980',
+    projectId: 'spider-slinger-game',
+    storageBucket: 'spider-slinger-game.firebasestorage.app',
+  );
+
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyD06shvCFtMPjV8jglunhi4qgE5CzWLU_w',
+    appId: '1:89150861980:web:8a828bb763af7a95f67359', // Using dummy web app ID with android hash
     messagingSenderId: '89150861980',
     projectId: 'spider-slinger-game',
     storageBucket: 'spider-slinger-game.firebasestorage.app',
