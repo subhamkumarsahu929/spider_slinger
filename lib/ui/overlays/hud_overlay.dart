@@ -26,6 +26,16 @@ class HudOverlay extends StatelessWidget {
           });
         }
         
+        final screenSize = MediaQuery.of(context).size;
+        final isSmallScreen = screenSize.height < 400;
+        final isLargeScreen = screenSize.height > 700;
+
+        final double burstWidth = isSmallScreen ? 90 : (isLargeScreen ? 170 : 120);
+        final double burstHeight = isSmallScreen ? 50 : (isLargeScreen ? 95 : 70);
+        final double fontSize = isSmallScreen ? 18 : (isLargeScreen ? 34 : 24);
+        final double shadowOffset1 = isSmallScreen ? 1.0 : (isLargeScreen ? 2.0 : 1.5);
+        final double shadowOffset2 = isSmallScreen ? 2.0 : (isLargeScreen ? 4.0 : 3.0);
+
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(24.0),
@@ -42,13 +52,13 @@ class HudOverlay extends StatelessWidget {
                 Align(
                   alignment: Alignment.topCenter,
                   child: SizedBox(
-                    width: 200,
-                    height: 120,
+                    width: burstWidth,
+                    height: burstHeight,
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         CustomPaint(
-                          size: const Size(200, 120),
+                          size: Size(burstWidth, burstHeight),
                           painter: ComicBurstPainter(),
                         ),
                         Transform(
@@ -57,12 +67,12 @@ class HudOverlay extends StatelessWidget {
                             _formatScore(gameState.score),
                             style: GoogleFonts.bangers(
                               color: Colors.white,
-                              fontSize: 44,
-                              letterSpacing: 2.0,
-                              shadows: const [
-                                Shadow(offset: Offset(2, 2), color: Colors.black),
-                                Shadow(offset: Offset(-2, -2), color: Colors.black),
-                                Shadow(offset: Offset(4, 4), color: Colors.black),
+                              fontSize: fontSize,
+                              letterSpacing: 1.5,
+                              shadows: [
+                                Shadow(offset: Offset(shadowOffset1, shadowOffset1), color: Colors.black),
+                                Shadow(offset: Offset(-shadowOffset1, -shadowOffset1), color: Colors.black),
+                                Shadow(offset: Offset(shadowOffset2, shadowOffset2), color: Colors.black),
                               ],
                             ),
                           ),

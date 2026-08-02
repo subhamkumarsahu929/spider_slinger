@@ -4,11 +4,10 @@ import '../config/assets.dart';
 
 class AudioService {
   static bool _soundEnabled = true;
-  // Set to true once you add physical audio files to assets/audio/ and update pubspec.yaml
-  static const bool _useAudio = false;
 
+  // Preloads audio files. Silently ignores missing files so the game
+  // doesn't crash when audio assets don't exist yet.
   static Future<void> initialize() async {
-    if (!_useAudio) return;
     try {
       await FlameAudio.audioCache.loadAll([
         AppAssets.webShotAudio,
@@ -17,7 +16,7 @@ class AudioService {
         AppAssets.hitAudio,
       ]);
     } catch (e) {
-      debugPrint('[AudioService] Failed to load audio assets: $e');
+      debugPrint('[AudioService] initialize: some audio files missing, sounds disabled. $e');
     }
   }
 
@@ -26,38 +25,30 @@ class AudioService {
   }
 
   static void playWebShot() {
-    if (!_useAudio || !_soundEnabled) return;
-    try {
-      FlameAudio.play(AppAssets.webShotAudio);
-    } catch (e) {
-      debugPrint('[AudioService] Failed to play web shot sound: $e');
-    }
+    if (_soundEnabled) _play(AppAssets.webShotAudio);
   }
 
   static void playJump() {
-    if (!_useAudio || !_soundEnabled) return;
-    try {
-      FlameAudio.play(AppAssets.jumpAudio);
-    } catch (e) {
-      debugPrint('[AudioService] Failed to play jump sound: $e');
-    }
+    if (_soundEnabled) _play(AppAssets.jumpAudio);
   }
 
   static void playHit() {
-    if (!_useAudio || !_soundEnabled) return;
-    try {
-      FlameAudio.play(AppAssets.hitAudio);
-    } catch (e) {
-      debugPrint('[AudioService] Failed to play hit sound: $e');
-    }
+    if (_soundEnabled) _play(AppAssets.hitAudio);
   }
 
   static void playGameOver() {
-    if (!_useAudio || !_soundEnabled) return;
+    if (_soundEnabled) _play(AppAssets.gameOverAudio);
+  }
+
+  // Internal helper: plays a sound and silently ignores missing-asset errors.
+  // Uses async/try-catch instead of .catchError() because catchError requires
+  // the handler to return the same type as the Future (AudioPlayer), which
+  // we can't do — so the async pattern is cleaner and type-safe.
+  static Future<void> _play(String file) async {
     try {
-      FlameAudio.play(AppAssets.gameOverAudio);
-    } catch (e) {
-      debugPrint('[AudioService] Failed to play game over sound: $e');
+      await FlameAudio.play(file);
+    } catch (_) {
+      // Audio file not found — game continues without sound.
     }
   }
 }
