@@ -6,6 +6,7 @@ import 'components/environment/skyline_background.dart';
 import 'components/managers/difficulty_manager.dart';
 import 'components/managers/procedural_spawner.dart';
 import 'components/managers/spawner_manager.dart';
+import '../services/audio_service.dart';
 
 class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
   final GameState gameState;
@@ -20,7 +21,10 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
 
   @override
   Future<void> onLoad() async {
-    super.onLoad();
+    // ⚠️ FIX: super.onLoad() MUST be awaited.
+    // Without await, FlameGame's own async setup (camera, world, etc.) is
+    // skipped before we start adding components, causing crashes and ANRs.
+    await super.onLoad();
 
     // Pre-cache enemy and environment assets (only once — stays in cache on reset)
     await images.loadAll([
@@ -61,7 +65,16 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
       ..position = Vector2(100, size.y - 200);
     world.add(_player);
 
+    // Pre-initialize audio while the game is still loading.
+    // This runs in the background (Flame's onLoad is async) so it does NOT
+    // block the main thread — avoiding the 63-second ANR freeze.
+    AudioService.initialize().catchError((_) {/* audio not available, ignore */});
+
     camera.follow(_player);
+    
+    // Pause the engine immediately so the game doesn't run in the background
+    // while the splash screen or main menu is active.
+    pauseEngine();
   }
 
   /// Tears down the live world and reinitialises it cleanly.

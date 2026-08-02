@@ -34,10 +34,19 @@ class UserRepository {
   // leaving all other fields (like bestScore) untouched.
   Future<void> registerOrUpdateUser(AppUser user, String? studentName, String? rollNumber) async {
     try {
-      final data = {
-        ...user.toFirestoreMap(),
+      final docRef = _firestore.collection('users').doc(user.uid);
+      final docSnap = await docRef.get();
+      
+      final Map<String, dynamic> data = {
+        'uid': user.uid,
+        'isAnonymous': user.isAnonymous,
+        'displayName': user.displayName ?? 'Anonymous Player',
         'lastSeenAt': FieldValue.serverTimestamp(),
       };
+      
+      if (!docSnap.exists) {
+        data['createdAt'] = FieldValue.serverTimestamp();
+      }
       
       if (studentName != null && studentName.isNotEmpty) {
         data['name'] = studentName;
@@ -46,7 +55,7 @@ class UserRepository {
         data['rollNumber'] = rollNumber;
       }
 
-      await _firestore.collection('users').doc(user.uid).set(
+      await docRef.set(
         data,
         SetOptions(merge: true),
       );
@@ -58,24 +67,32 @@ class UserRepository {
     }
   }
 
-  // ── Update Best Score ──────────────────────────────────────────────────────
-  // Called from GameState after a game over, ONLY if the new score beats
-  // the existing best. Uses FieldValue.increment for the game count.
   Future<void> updateAfterGame(String uid, int newScore) async {
     try {
-      // First, fetch the current best score to compare.
+      // Fetch existing best score to decide whether to update it.
       final doc = await _firestore.collection('users').doc(uid).get();
       final currentBest = (doc.data()?['bestScore'] as num?)?.toInt() ?? 0;
+      final isNewRecord = newScore > currentBest;
 
-      await _firestore.collection('users').doc(uid).update({
-        'totalGames': FieldValue.increment(1), // always increment game count
-        if (newScore > currentBest)
-          'bestScore': newScore,               // only update if it's a new record
+      final Map<String, dynamic> updateData = {
+        'totalGames': FieldValue.increment(1),   // always bump game count
         'lastSeenAt': FieldValue.serverTimestamp(),
-      });
-      debugPrint('[UserRepository] Game recorded. Best score: ${newScore > currentBest ? newScore : currentBest}');
+        if (isNewRecord) 'bestScore': newScore,  // only update if it's a new record
+      };
+
+      // Use set(merge:true) instead of update() to avoid "not-found" crash
+      // when this runs before registerOrUpdateUser() completes.
+      await _firestore.collection('users').doc(uid).set(
+        updateData,
+        SetOptions(merge: true),
+      );
+
+      debugPrint(
+        '[UserRepository] Game recorded for uid=$uid | '
+        'score=$newScore | bestScore=${isNewRecord ? newScore : currentBest} | newRecord=$isNewRecord',
+      );
     } on FirebaseException catch (e) {
-      debugPrint('[UserRepository] updateAfterGame failed: ${e.code} — ${e.message}');
+      debugPrint('[UserRepository] updateAfterGame FAILED: ${e.code} — ${e.message}');
     } catch (e) {
       debugPrint('[UserRepository] updateAfterGame unexpected error: $e');
     }

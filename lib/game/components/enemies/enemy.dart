@@ -4,6 +4,8 @@ import '../../spider_slinger_game.dart';
 import '../player/player_component.dart';
 import '../environment/platform_block.dart';
 import '../../../config/game_constants.dart';
+import 'dart:math';
+import '../effects/hit_text_component.dart';
 
 enum EnemyType { crawler, airborne }
 enum EnemyState { idle, walk, attack, hit, death }
@@ -114,6 +116,12 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
   void hitByWeb(int damage) {
     if (isDying) return;
     health -= damage;
+    
+    // Spawn comic hit text!
+    final hitWords = ['BAM!', 'POW!', 'WHACK!', 'THWIP!', 'SMACK!', 'CRUNCH!', 'BONK!', 'ZAP!', 'BIFF!'];
+    final word = hitWords[Random().nextInt(hitWords.length)];
+    game.world.add(HitTextComponent(text: word, position: position.clone()));
+
     if (health <= 0) {
       isDying = true;
       current = EnemyState.hit;

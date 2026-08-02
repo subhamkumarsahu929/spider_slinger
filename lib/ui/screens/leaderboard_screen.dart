@@ -1,8 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 
-class LeaderboardScreen extends StatelessWidget {
+class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
+
+  @override
+  State<LeaderboardScreen> createState() => _LeaderboardScreenState();
+}
+
+class _LeaderboardScreenState extends State<LeaderboardScreen> {
+  late Future<QuerySnapshot> _leaderboardFuture;
+  late Future<QuerySnapshot> _countFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  void _loadData() {
+    // Use .get() instead of .snapshots() — avoids persistent listener that
+    // triggers PERMISSION_DENIED when Firestore rules haven't been deployed yet.
+    // Also works with Firestore offline cache.
+    _leaderboardFuture = FirebaseFirestore.instance
+        .collection('users')
+        .orderBy('bestScore', descending: true)
+        .limit(15)
+        .get(GetOptions(source: Source.serverAndCache));
+    _countFuture = FirebaseFirestore.instance
+        .collection('users')
+        .get(GetOptions(source: Source.serverAndCache));
+  }
+
+  void _refresh() {
+    setState(() => _loadData());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +44,7 @@ class LeaderboardScreen extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            // Header with Live Indicator
+            // Header
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: Row(
@@ -31,10 +64,17 @@ class LeaderboardScreen extends StatelessWidget {
                       ],
                     ),
                   ),
+                  const SizedBox(width: 16),
+                  // Refresh button
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white54, size: 28),
+                    tooltip: 'Refresh leaderboard',
+                    onPressed: _refresh,
+                  ),
                 ],
               ),
             ),
-            
+
             // Table Headers
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 48.0),
@@ -43,8 +83,8 @@ class LeaderboardScreen extends StatelessWidget {
                 color: Colors.blueGrey.shade900,
                 border: const Border(bottom: BorderSide(color: Colors.white24, width: 2)),
               ),
-              child: Row(
-                children: const [
+              child: const Row(
+                children: [
                   Expanded(flex: 1, child: Text('RANK', style: _headerStyle)),
                   Expanded(flex: 3, child: Text('STUDENT NAME', style: _headerStyle)),
                   Expanded(flex: 2, child: Text('ROLL NUMBER', style: _headerStyle)),
@@ -53,26 +93,67 @@ class LeaderboardScreen extends StatelessWidget {
               ),
             ),
 
-            // Live Data Stream
+            // Leaderboard data
             Expanded(
-              child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection('users')
-                    .orderBy('bestScore', descending: true)
-                    .limit(15)
-                    .snapshots(),
+              child: FutureBuilder<QuerySnapshot>(
+                future: _leaderboardFuture,
                 builder: (context, snapshot) {
-                  if (snapshot.hasError) {
-                    return Center(child: Text('Error: ${snapshot.error}', style: const TextStyle(color: Colors.red)));
-                  }
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(child: CircularProgressIndicator(color: Colors.white));
                   }
 
+                  // Handle permission denied or other errors gracefully
+                  if (snapshot.hasError) {
+                    final err = snapshot.error.toString();
+                    final isPermission = err.contains('PERMISSION_DENIED') || err.contains('permission');
+                    debugPrint('[Leaderboard] Error: $err');
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(32),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              isPermission ? Icons.lock_outline : Icons.wifi_off,
+                              color: Colors.white38,
+                              size: 64,
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                              isPermission
+                                  ? 'LEADERBOARD LOCKED'
+                                  : 'CONNECTION ERROR',
+                              style: const TextStyle(color: Colors.white70, fontSize: 24, fontWeight: FontWeight.bold, letterSpacing: 2),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              isPermission
+                                  ? 'Firestore security rules need to be published.\nGo to Firebase Console → Firestore → Rules\nand click Publish.'
+                                  : 'Check your internet connection and try again.',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.white38, fontSize: 16, height: 1.6),
+                            ),
+                            const SizedBox(height: 32),
+                            ElevatedButton.icon(
+                              onPressed: _refresh,
+                              icon: const Icon(Icons.refresh),
+                              label: const Text('RETRY'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.redAccent,
+                                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
                   final docs = snapshot.data?.docs ?? [];
-                  
                   if (docs.isEmpty) {
-                    return const Center(child: Text('NO SCORES YET', style: TextStyle(color: Colors.white54, fontSize: 24)));
+                    return const Center(
+                      child: Text('NO SCORES YET', style: TextStyle(color: Colors.white54, fontSize: 24)),
+                    );
                   }
 
                   return ListView.builder(
@@ -84,7 +165,7 @@ class LeaderboardScreen extends StatelessWidget {
                         index: index,
                         name: data['name'] ?? data['displayName'] ?? 'Unknown Student',
                         rollNumber: data['rollNumber'] ?? '---',
-                        score: data['bestScore'] ?? 0,
+                        score: (data['bestScore'] as num?)?.toInt() ?? 0,
                       );
                     },
                   );
@@ -92,9 +173,9 @@ class LeaderboardScreen extends StatelessWidget {
               ),
             ),
 
-            // Footer Participant Counter
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance.collection('users').snapshots(),
+            // Footer participant counter
+            FutureBuilder<QuerySnapshot>(
+              future: _countFuture,
               builder: (context, snapshot) {
                 final count = snapshot.data?.docs.length ?? 0;
                 return Padding(
@@ -104,8 +185,8 @@ class LeaderboardScreen extends StatelessWidget {
                     style: const TextStyle(color: Colors.white54, fontSize: 18, letterSpacing: 1.5),
                   ),
                 );
-              }
-            )
+              },
+            ),
           ],
         ),
       ),

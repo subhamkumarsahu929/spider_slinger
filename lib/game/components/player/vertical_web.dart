@@ -25,7 +25,17 @@ class VerticalWeb extends PositionComponent {
       playerConnectWorld.y - anchorWorld.y,
     );
 
-    // Rope line
+    // Rope line (Outer thick black stroke for comic outline)
+    canvas.drawLine(
+      Offset.zero,
+      end,
+      Paint()
+        ..color = Colors.black
+        ..strokeWidth = 6.0
+        ..style = PaintingStyle.stroke,
+    );
+
+    // Rope line (Inner solid white fill)
     canvas.drawLine(
       Offset.zero,
       end,
@@ -36,10 +46,17 @@ class VerticalWeb extends PositionComponent {
     );
 
     // Small anchor circle at the ceiling attachment point
+    // Outer black stroke
     canvas.drawCircle(
       Offset.zero,
-      5.0,
-      Paint()..color = Colors.white70,
+      6.0,
+      Paint()..color = Colors.black,
+    );
+    // Inner white fill
+    canvas.drawCircle(
+      Offset.zero,
+      3.0,
+      Paint()..color = Colors.white,
     );
   }
 }

@@ -15,7 +15,10 @@ import 'ui/overlays/hud_overlay.dart';
 import 'ui/overlays/pause_menu_overlay.dart';
 import 'ui/overlays/game_over_overlay.dart';
 import 'ui/overlays/tutorial_overlay.dart';
+import 'ui/overlays/how_to_play_overlay.dart';
+import 'ui/overlays/venom_intro_overlay.dart';
 import 'ui/screens/leaderboard_screen.dart';
+import 'ui/screens/splash_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,6 +28,9 @@ void main() async {
     DeviceOrientation.landscapeLeft,
     DeviceOrientation.landscapeRight,
   ]);
+
+  // Hide status bar and system navigation overlay for immersive game experience
+  await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
   // ✅ STEP B: Initialize Firebase before runApp().
   // DefaultFirebaseOptions comes from the auto-generated firebase_options.dart.
@@ -94,7 +100,8 @@ class _SpiderSlingerAppState extends State<SpiderSlingerApp> {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const GameScreen(),
+        '/': (context) => const SplashScreen(),
+        '/game': (context) => const GameScreen(),
         GameRoutes.leaderboardRoute: (context) => const LeaderboardScreen(),
       },
     );
@@ -124,6 +131,8 @@ class GameScreen extends StatelessWidget {
               GameRoutes.pauseMenu: (context, game) => PauseMenuOverlay(game: game),
               GameRoutes.gameOver: (context, game) => GameOverOverlay(game: game),
               GameRoutes.tutorial: (context, game) => TutorialOverlay(game: game),
+              GameRoutes.howToPlay: (context, game) => HowToPlayOverlay(game: game),
+              GameRoutes.venomIntro: (context, game) => VenomIntroOverlay(game: game),
             },
           ),
         );

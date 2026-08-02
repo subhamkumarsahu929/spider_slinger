@@ -31,21 +31,34 @@ class ScoreRepository {
   // Called from GameState._triggerGameOver() when the player has a uid.
   // Uses .add() which auto-generates a unique document ID (safer than .set()).
   Future<void> submitScore(UserScore score) async {
+    // ── Debug: log exactly what we're about to write ──────────────────────────
+    debugPrint(
+      '[ScoreRepository] ▶ submitScore called:\n'
+      '   userId   = ${score.userId}\n'
+      '   score    = ${score.score}\n'
+      '   attempts = ${score.attempts}',
+    );
+
+    if (score.userId.isEmpty) {
+      debugPrint('[ScoreRepository] ✗ submitScore ABORTED: userId is empty! User was not authenticated.');
+      return;
+    }
+
     try {
-      await _firestore.collection('scores').add({
+      final docRef = await _firestore.collection('scores').add({
         ...score.toMap(),
         // FieldValue.serverTimestamp() lets the FIRESTORE SERVER write the time.
         // This is more reliable than the client clock for ordering the leaderboard,
         // because client clocks can be wrong or spoofed.
         'timestamp': FieldValue.serverTimestamp(),
       });
-      debugPrint('[ScoreRepository] Score submitted for uid: ${score.userId}');
+      debugPrint('[ScoreRepository] ✔ Score stored! docId=${docRef.id} | userId=${score.userId} | score=${score.score}');
     } on FirebaseException catch (e) {
       // FirebaseException.code will be 'permission-denied' if Firestore rules block it.
       // That means Anonymous Auth is not enabled, or the user isn't signed in.
-      debugPrint('[ScoreRepository] submitScore failed: ${e.code} — ${e.message}');
+      debugPrint('[ScoreRepository] ✗ submitScore FAILED: ${e.code} — ${e.message}');
     } catch (e) {
-      debugPrint('[ScoreRepository] submitScore unexpected error: $e');
+      debugPrint('[ScoreRepository] ✗ submitScore unexpected error: $e');
     }
   }
 

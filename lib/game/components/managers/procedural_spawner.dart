@@ -51,7 +51,8 @@ class ProceduralSpawner extends Component with HasGameReference<SpiderSlingerGam
     
     // 2. 40% chance to spawn a floating platform hovering over this ground segment
     if (_random.nextDouble() < 0.4) {
-      double floatingY = floorY - (70 + _random.nextDouble() * 80);
+      // Pushed floating platforms higher up (130 to 230 pixels above ground)
+      double floatingY = floorY - (130 + _random.nextDouble() * 100);
       double currentX = startX;
       
       // Spawn left edge
