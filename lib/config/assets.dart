@@ -13,4 +13,5 @@ class AppAssets {
   static const String jumpAudio = 'jump.wav';
   static const String gameOverAudio = 'game_over.wav';
   static const String hitAudio = 'hit.wav';
+  static const String bgmAudio = 'bgm_theme.mp3';
 }

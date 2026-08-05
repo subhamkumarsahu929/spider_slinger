@@ -1,29 +1,24 @@
 import 'dart:ui';
 import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
-import '../../spider_slinger_game.dart';
-import '../player/player_component.dart';
 import '../environment/platform_block.dart';
 import '../../../config/game_constants.dart';
-import 'dart:math';
-import '../effects/hit_text_component.dart';
+
+import 'base_boss.dart';
 
 enum VenomState { idle, running, leapAttack, groundPound, hit, death }
 
-class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameReference<SpiderSlingerGame>, CollisionCallbacks {
-  int health = 20;
-  bool isDying = false;
-  double _stateTimer = 0.0;
+class VenomBoss extends BaseBoss<VenomState> {
   bool _isLeaping = false;
-  bool isFacingRight = false; // Starts facing left
-  
-  double verticalVelocity = 0.0;
   
   // Constants
-  final double runSpeed = 150.0 * 2.0; // 2.0x normal speed (faster)
   final double leapForce = -650.0; // Slightly higher leap
   
-  VenomBoss() : super(size: Vector2(96, 96), anchor: Anchor.center);
+  VenomBoss() : super(
+    health: 20,
+    runSpeed: 150.0 * 2.0,
+    size: Vector2(96, 96),
+  );
 
   @override
   Future<void> onLoad() async {
@@ -86,25 +81,21 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
     if (current == VenomState.death) {
       if (animationTicker?.done() ?? false) {
         // #2 — Trigger win AFTER death animation finishes
-        game.gameState.triggerWin();
+        game.gameState.bossDefeated();
         removeFromParent();
       }
       return;
     }
 
-    _stateTimer += dt;
+    stateTimer += dt;
     
     // Alternating behavior: run for a bit, then leap (more frequent leaps for challenge)
-    if (!_isLeaping && _stateTimer > 1.5) {
+    if (!_isLeaping && stateTimer > 1.5) {
       _startLeap();
     }
 
     // Find player to track their position
-    double targetDirection = -1; // Default left
-    final player = game.world.children.whereType<PlayerComponent>().firstOrNull;
-    if (player != null) {
-      targetDirection = player.position.x > position.x ? 1.0 : -1.0;
-    }
+    double targetDirection = getPlayerDirection();
 
     if (_isLeaping) {
       verticalVelocity += GameConstants.gravity * dt;
@@ -126,7 +117,7 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
       }
     } else {
       if (current == VenomState.groundPound) {
-        if (_stateTimer > 0.6) {
+        if (stateTimer > 0.6) {
           current = VenomState.running;
         }
       } else {
@@ -139,15 +130,7 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
     double horizontalMovement = targetDirection * runSpeed;
 
     // Direction Flipping Logic
-    bool movingLeft = horizontalMovement < 0;
-    bool movingRight = horizontalMovement > 0;
-    if (movingLeft && isFacingRight) {
-      flipHorizontallyAroundCenter();
-      isFacingRight = false;
-    } else if (movingRight && !isFacingRight) {
-      flipHorizontallyAroundCenter();
-      isFacingRight = true;
-    }
+    updateFacingDirection(horizontalMovement);
     
     // Bounds check relative to camera
     if (position.x + size.x < game.camera.viewfinder.position.x - game.size.x) {
@@ -164,18 +147,13 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
   /// Called when the leap arc completes (either via collision or fallback).
   void _landLeap() {
     _isLeaping = false;
-    _stateTimer = 0.0;
+    stateTimer = 0.0;
     current = VenomState.groundPound;
   }
 
   @override
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
-    if (other is PlayerComponent) {
-      if (!game.gameState.isInvulnerable && !isDying) {
-        other.hit();
-      }
-    }
     // #7 — Land the leap on any platform, not a magic floor Y
     if (_isLeaping && other is PlatformBlock && verticalVelocity >= 0) {
       if (intersectionPoints.isNotEmpty) {
@@ -198,26 +176,13 @@ class VenomBoss extends SpriteAnimationGroupComponent<VenomState> with HasGameRe
     }
   }
 
-  void hitByWeb(int damage) {
-    if (isDying) return;
-    health -= damage;
-    // Spawn comic hit text!
-    final hitWords = ['BAM!', 'POW!', 'WHACK!', 'THWIP!', 'SMACK!', 'CRUNCH!', 'BONK!', 'ZAP!', 'BIFF!'];
-    final word = hitWords[Random().nextInt(hitWords.length)];
-    game.world.add(HitTextComponent(text: word, position: position.clone()));
-
-    // #13 — Camera shake on every hit; stronger shake on death
-    game.cameraShake(
-      duration: health <= 0 ? 0.45 : 0.2,
-      intensity: health <= 0 ? 14.0 : 7.0,
-    );
-
+  @override
+  void onHit() {
     current = VenomState.hit;
+  }
 
-    if (health <= 0) {
-      isDying = true;
-      // #5 — Proportional score: base 500 + 100 per life remaining
-      game.gameState.addScore(500 + game.gameState.lives * 100);
-    }
+  @override
+  void onDeath() {
+    // Current is set to hit initially, update() handles transitioning to death
   }
 }

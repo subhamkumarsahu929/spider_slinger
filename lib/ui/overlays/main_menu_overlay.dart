@@ -112,6 +112,7 @@ class MainMenuOverlay extends StatelessWidget {
                       }
                       
                       AudioService.initialize();
+                      AudioService.playBgm();
                     },
                   ),
                   const SizedBox(height: 24),

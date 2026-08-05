@@ -45,9 +45,9 @@ class _TutorialOverlayState extends State<TutorialOverlay> with SingleTickerProv
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('tutorial_completed', true);
     widget.game.overlays.remove(GameRoutes.tutorial);
-    // The HUD was placed beneath us; just resume the game!
     widget.game.resumeEngine();
     AudioService.initialize();
+    AudioService.playBgm();
   }
   
   void _advanceStep() {

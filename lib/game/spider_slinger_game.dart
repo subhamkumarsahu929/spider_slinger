@@ -43,6 +43,9 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
       'enemies/Fly-Enemy/Fly-Enemy-Hit-Sheet.png',
       'enemies/Fly-Enemy/Fly-Enemy-Death-Sheet.png',
       'enemies/Venom.png',
+      'enemies/\$Rhino.png',
+      'enemies/\$Electro.png',
+      'enemies/\$Vulture Character Sprite.png',
       'environment/platform-template.png',
       for (final i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14]) 'buildings/build_day_$i.png',
       for (final i in [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 14]) 'buildings/build_night_$i.png',
@@ -71,6 +74,7 @@ class SpiderSlingerGame extends FlameGame with HasCollisionDetection {
     AudioService.initialize().catchError((_) {/* audio not available, ignore */});
 
     camera.follow(_player);
+    camera.viewfinder.position = _player.position.clone();
     
     // Pause the engine immediately so the game doesn't run in the background
     // while the splash screen or main menu is active.

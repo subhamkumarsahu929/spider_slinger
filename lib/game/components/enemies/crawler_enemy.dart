@@ -8,32 +8,44 @@ enum CrawlerType { little, tall }
 class CrawlerEnemy extends Enemy {
   final CrawlerType crawlerType;
 
-  CrawlerEnemy({required super.speed, required this.crawlerType}) 
-      : super(type: EnemyType.crawler, size: Vector2(96, 64));
+  CrawlerEnemy({
+    required super.speed,
+    this.crawlerType = CrawlerType.little,
+    super.patrolMinX,
+    super.patrolMaxX,
+  }) : super(
+          type: EnemyType.crawler,
+          size: crawlerType == CrawlerType.little ? Vector2(48, 48) : Vector2(48, 48),
+        );
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
-    useGravity = true; // #6 — Crawlers should fall and land on platforms
-    // Tighten crawler hitbox (Sprite size is 96x64, real visual is smaller)
-    add(RectangleHitbox(size: Vector2(60, 40), position: Vector2(18, 24)));
+    useGravity = true;
 
-    final String prefix = crawlerType == CrawlerType.little ? 'enemies/Little-Enemy/Little-Enemy' : 'enemies/Tall-Enemy/Tall-Enemy';
+    final String prefix = crawlerType == CrawlerType.little ? 'Little-Enemy' : 'Tall-Enemy';
+    
+    SpriteAnimation createAnim(String action, int frames, {bool loop = true}) {
+      return SpriteAnimation.fromFrameData(
+        game.images.fromCache('enemies/$prefix/$prefix-$action-Sheet.png'),
+        SpriteAnimationData.sequenced(
+          amount: frames,
+          stepTime: 0.15,
+          textureSize: Vector2(48, 48),
+          loop: loop,
+        ),
+      );
+    }
 
-    // Assumed amounts (4 for animation loops, 2 for hit, 4 for death)
-    // Adjust 'amount' if the sprite strips have a different number of frames.
     animations = {
-      EnemyState.idle: createAnim('$prefix-Idle-Sheet.png', amount: 4),
-      EnemyState.walk: createAnim('$prefix-Walk-Sheet.png', amount: 4),
-      EnemyState.attack: createAnim('$prefix-Attack-Sheet.png', amount: 4),
-      EnemyState.hit: createAnim('$prefix-Hit-Sheet.png', amount: 2, loop: false),
-      EnemyState.death: createAnim('$prefix-Death-Sheet.png', amount: 4, loop: false),
+      EnemyState.idle: createAnim('Idle', 4),
+      EnemyState.walk: createAnim('Walk', 4),
+      EnemyState.attack: createAnim('Attack', 4),
+      EnemyState.hit: createAnim('Hit', 4, loop: false),
+      EnemyState.death: createAnim('Death', 4, loop: false),
     };
 
-    // Tint to match comic aesthetic
-    final tint = crawlerType == CrawlerType.little ? const Color(0xFFFF2F92) : const Color(0xFF3A1C8C);
-    paint.colorFilter = ColorFilter.mode(tint, BlendMode.srcIn);
-
     current = EnemyState.walk;
+    
+    add(RectangleHitbox(size: Vector2(36, 36), position: Vector2(6, 12)));
   }
 }

@@ -22,7 +22,11 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
   double verticalVelocity = 0.0;
   bool isGrounded = false;
 
-  Enemy({required this.type, required this.speed, required Vector2 size})
+  // Feature 2: Patrol boundaries
+  double? patrolMinX;
+  double? patrolMaxX;
+
+  Enemy({required this.type, required this.speed, required Vector2 size, this.patrolMinX, this.patrolMaxX})
       : super(size: size, anchor: Anchor.center);
 
   @override
@@ -48,6 +52,15 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
     } else {
       double horizontalMovement = -speed * dt; // Moving left by default
       position.x += horizontalMovement;
+
+      // Handle patrol boundaries
+      if (patrolMinX != null && position.x - size.x / 2 < patrolMinX!) {
+        position.x = patrolMinX! + size.x / 2;
+        speed = -speed; // Reverse direction
+      } else if (patrolMaxX != null && position.x + size.x / 2 > patrolMaxX!) {
+        position.x = patrolMaxX! - size.x / 2;
+        speed = -speed; // Reverse direction
+      }
 
       // #6 — Apply gravity for ground-based enemies
       if (useGravity) {
@@ -126,6 +139,7 @@ abstract class Enemy extends SpriteAnimationGroupComponent<EnemyState>
       isDying = true;
       current = EnemyState.hit;
       speed = 0; // Stop moving
+      children.whereType<ShapeHitbox>().forEach((h) => h.collisionType = CollisionType.inactive);
     }
   }
 

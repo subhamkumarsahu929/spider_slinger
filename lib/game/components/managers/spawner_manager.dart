@@ -1,8 +1,10 @@
 import 'package:flame/components.dart';
 import 'difficulty_manager.dart';
-import '../enemies/crawler_enemy.dart';
 import '../enemies/airborne_enemy.dart';
 import '../enemies/venom_boss.dart';
+import '../enemies/rhino_boss.dart';
+import '../enemies/electro_boss.dart';
+import '../enemies/vulture_boss.dart';
 import '../../spider_slinger_game.dart';
 import 'dart:math';
 
@@ -11,6 +13,7 @@ class SpawnerManager extends Component with HasGameReference<SpiderSlingerGame> 
   double _timer = 0;
   final Random _random = Random();
   bool _venomSpawned = false;
+  int _lastLoopCount = 0;
 
   SpawnerManager({required this.difficultyManager});
 
@@ -19,9 +22,31 @@ class SpawnerManager extends Component with HasGameReference<SpiderSlingerGame> 
     super.update(dt);
     if (game.gameState.isGameOver) return;
 
+    if (game.gameState.loopCount > _lastLoopCount) {
+      _lastLoopCount = game.gameState.loopCount;
+      _venomSpawned = false;
+      difficultyManager.resetPhase();
+    }
+
     if (difficultyManager.currentPhase == 3 && !_venomSpawned) {
       _venomSpawned = true;
-      game.world.add(VenomBoss()
+      int bossType = _random.nextInt(4);
+      PositionComponent boss;
+      if (bossType == 0) {
+        boss = VenomBoss();
+        game.gameState.setBossInfo('VENOM', 'WE ARE VENOM');
+      } else if (bossType == 1) {
+        boss = RhinoBoss();
+        game.gameState.setBossInfo('RHINO', 'You fight me now!');
+      } else if (bossType == 2) {
+        boss = ElectroBoss();
+        game.gameState.setBossInfo('ELECTRO', 'You are gonna FRY tonight!');
+      } else {
+        boss = VultureBoss();
+        game.gameState.setBossInfo('VULTURE', 'Good ol\' spiderman.');
+      }
+
+      game.world.add(boss
         ..position = Vector2(game.camera.viewfinder.position.x + game.size.x, game.size.y - 150));
         
       // Pause game and show Venom Intro Overlay
@@ -52,16 +77,8 @@ class SpawnerManager extends Component with HasGameReference<SpiderSlingerGame> 
     // Spawn enemies relative to the camera's current position so they come from off-screen right
     double spawnX = game.camera.viewfinder.position.x + game.size.x;
 
-    if (spawnAirborne) {
-      double initialY = game.size.y / 2 - 100 + _random.nextDouble() * 200;
-      game.world.add(AirborneEnemy(speed: speed, initialY: initialY)
-        ..position = Vector2(spawnX, initialY));
-    } else {
-      // #1 — Spawn above the floor so gravity drops them onto whatever platform
-      // is beneath spawnX — avoids floating in mid-air over procedural gaps.
-      CrawlerType cType = _random.nextBool() ? CrawlerType.little : CrawlerType.tall;
-      game.world.add(CrawlerEnemy(speed: speed, crawlerType: cType)
-        ..position = Vector2(spawnX, game.size.y - 250));
-    }
+    double initialY = game.size.y / 2 - 100 + _random.nextDouble() * 200;
+    game.world.add(AirborneEnemy(speed: speed, initialY: initialY)
+      ..position = Vector2(spawnX, initialY));
   }
 }

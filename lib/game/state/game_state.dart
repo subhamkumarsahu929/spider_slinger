@@ -5,6 +5,7 @@ import '../../models/app_user_model.dart';
 import '../../models/user_score_model.dart';
 import '../../services/score_repository.dart';
 import '../../services/user_repository.dart'; // ← NEW: user profile storage
+import '../../services/audio_service.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // GameState is the single source of truth for all game data.
@@ -31,6 +32,10 @@ class GameState extends ChangeNotifier {
   String? studentName;
   String? rollNumber;
   int _attempts = 0;
+  int _loopCount = 0; // Tracks endless progression loops
+  
+  String currentBossName = 'VENOM';
+  String currentBossTaunt = 'WE ARE VENOM';
 
   // Firebase repositories — both write to Firestore on game over.
   final ScoreRepository _scoreRepository = ScoreRepository();
@@ -44,6 +49,7 @@ class GameState extends ChangeNotifier {
   double get invulnerabilityTime => _invulnerabilityTime;
   AppUser? get currentUser => _currentUser;
   int get attempts => _attempts;
+  int get loopCount => _loopCount;
 
   void setUser(AppUser? user) {
     _currentUser = user;
@@ -61,6 +67,12 @@ class GameState extends ChangeNotifier {
     if (_currentUser != null) {
       _userRepository.registerOrUpdateUser(_currentUser!, studentName, rollNumber);
     }
+  }
+  
+  void setBossInfo(String name, String taunt) {
+    currentBossName = name;
+    currentBossTaunt = taunt;
+    notifyListeners();
   }
 
   // ── addScore ───────────────────────────────────────────────────────────────
@@ -92,16 +104,24 @@ class GameState extends ChangeNotifier {
     _isGameOver = false;
     _isInvulnerable = false;
     _invulnerabilityTime = 0.0;
+    _loopCount = 0; // Reset progression
     _attempts++;
+    AudioService.playBgm();
     notifyListeners();
   }
 
-  // ── triggerWin ─────────────────────────────────────────────────────────────
-  void triggerWin() {
+  // ── bossDefeated ─────────────────────────────────────────────────────────────
+  void bossDefeated() {
     if (_isGameOver) return;
-    addScore(GameConstants.scoreFinish);
-    addScore(_lives * GameConstants.scorePerLife);
-    _triggerGameOver();
+    
+    // Reward points for defeating boss based on loop multiplier
+    int baseScore = 500;
+    int loopMultiplier = 1 + _loopCount;
+    addScore(baseScore * loopMultiplier);
+    
+    // Increment endless progression loop
+    _loopCount++;
+    notifyListeners();
   }
 
   // ── _triggerGameOver ───────────────────────────────────────────────────────
@@ -111,6 +131,7 @@ class GameState extends ChangeNotifier {
   //   2. users/{uid}      — updates totalGames + bestScore (user profile)
   Future<void> _triggerGameOver() async {
     _isGameOver = true;
+    AudioService.stopBgm();
     notifyListeners();
 
     if (_currentUser != null) {

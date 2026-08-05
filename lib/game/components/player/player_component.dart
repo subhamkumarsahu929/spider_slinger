@@ -230,7 +230,8 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
         // Respawn at last known safe ground position, or a default if none yet
         final safePos = _lastSafePosition.isZero()
             ? Vector2(game.camera.viewfinder.position.x, game.size.y - 200)
-            : _lastSafePosition;
+            : _lastSafePosition.clone();
+        safePos.y -= 100;
         position.setFrom(safePos);
         verticalVelocity  = 0;
         horizontalVelocity = 0;
@@ -445,6 +446,11 @@ class PlayerComponent extends SpriteAnimationGroupComponent<PlayerState> with Ha
     if (game.gameState.isGameOver || isHanging) return;
 
     if (!isGrounded) {
+      // Feature 1: Web Swing Height Limitation
+      if (position.y < GameConstants.maxSwingHeight) {
+        return; // Reject web attachment if too high up
+      }
+
       isHanging = true;
       verticalVelocity = 0;
 

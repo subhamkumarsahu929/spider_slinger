@@ -23,7 +23,7 @@ class FinishLine extends PositionComponent with HasGameReference<SpiderSlingerGa
   void onCollisionStart(Set<Vector2> intersectionPoints, PositionComponent other) {
     super.onCollisionStart(intersectionPoints, other);
     if (other is PlayerComponent) {
-      game.gameState.triggerWin();
+      game.gameState.bossDefeated();
     }
   }
 }

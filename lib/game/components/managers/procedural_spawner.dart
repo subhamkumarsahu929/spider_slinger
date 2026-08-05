@@ -3,6 +3,8 @@ import 'package:flame/components.dart';
 import '../../spider_slinger_game.dart';
 import '../environment/platform_block.dart';
 import '../environment/hazard_block.dart';
+import '../enemies/crawler_enemy.dart';
+import 'spawner_manager.dart';
 
 class ProceduralSpawner extends Component with HasGameReference<SpiderSlingerGame> {
   double _lastSpawnX = 0;
@@ -49,6 +51,23 @@ class ProceduralSpawner extends Component with HasGameReference<SpiderSlingerGam
       _lastSpawnX += 32;
     }
     
+    // Feature 2: Spawn crawler enemy on the ground occasionally
+    if (_random.nextDouble() < 0.4) {
+      double speedMult = 1.0;
+      final sm = game.world.children.whereType<SpawnerManager>().firstOrNull;
+      if (sm != null) {
+        speedMult = sm.difficultyManager.enemySpeedMultiplier;
+      }
+      
+      CrawlerType cType = _random.nextBool() ? CrawlerType.little : CrawlerType.tall;
+      game.world.add(CrawlerEnemy(
+        speed: 150.0 * speedMult, 
+        crawlerType: cType,
+        patrolMinX: startX,
+        patrolMaxX: _lastSpawnX,
+      )..position = Vector2(startX + 16, floorY - 48));
+    }
+    
     // 2. 40% chance to spawn a floating platform hovering over this ground segment
     if (_random.nextDouble() < 0.4) {
       // Pushed floating platforms higher up (130 to 230 pixels above ground)
@@ -71,6 +90,58 @@ class ProceduralSpawner extends Component with HasGameReference<SpiderSlingerGam
       
       // Spawn right edge
       game.world.add(PlatformBlock(position: Vector2(currentX, floatingY), theme: theme, platformType: PlatformType.thinLedgeRight));
+      
+      // Feature 3: Spawn down-facing spikes occasionally on the bottom of floating platforms
+      if (_random.nextDouble() < 0.25) {
+        int randomMidBlock = 1 + _random.nextInt(midBlocks > 0 ? midBlocks : 1);
+        game.world.add(HazardBlock(
+          position: Vector2(startX + (randomMidBlock * 32) + 8, floatingY + 16),
+          theme: theme,
+          direction: SpikeDirection.down,
+        ));
+      }
+
+      // Feature 3: Spawn left-facing spike on the left edge sometimes
+      if (_random.nextDouble() < 0.1) {
+        game.world.add(HazardBlock(
+          position: Vector2(startX - 16, floatingY),
+          theme: theme,
+          direction: SpikeDirection.left,
+        ));
+      }
+
+      // Feature 3: Spawn right-facing spike on the right edge sometimes
+      if (_random.nextDouble() < 0.1) {
+        game.world.add(HazardBlock(
+          position: Vector2(currentX + 16, floatingY),
+          theme: theme,
+          direction: SpikeDirection.right,
+        ));
+      }
+      
+      // Feature 2: Spawn platform-bound crawler enemy occasionally
+      if (_random.nextDouble() < 0.4) { // Increased from 0.3
+        // Query speed multiplier from SpawnerManager if possible
+        double speedMult = 1.0;
+        final sm = game.world.children.whereType<SpawnerManager>().firstOrNull;
+        if (sm != null) {
+          speedMult = sm.difficultyManager.enemySpeedMultiplier;
+        }
+        
+        CrawlerType cType = _random.nextBool() ? CrawlerType.little : CrawlerType.tall;
+        game.world.add(CrawlerEnemy(
+          speed: 150.0 * speedMult, 
+          crawlerType: cType,
+          patrolMinX: startX,
+          patrolMaxX: currentX + 16,
+        )..position = Vector2(startX + 16, floatingY - 48)); // Spawn on left edge
+      }
+    }
+    
+    // Feature 4: Introduce gaps between segments occasionally (pits)
+    if (_random.nextDouble() < 0.5) {
+      int gapBlocks = 3 + _random.nextInt(3); // 3 to 5 block gap
+      _lastSpawnX += gapBlocks * 32.0;
     }
   }
   

@@ -15,6 +15,7 @@ class AudioService {
         AppAssets.gameOverAudio,
         AppAssets.hitAudio,
       ]);
+      await FlameAudio.bgm.initialize();
     } catch (e) {
       debugPrint('[AudioService] initialize: some audio files missing, sounds disabled. $e');
     }
@@ -50,5 +51,19 @@ class AudioService {
     } catch (_) {
       // Audio file not found — game continues without sound.
     }
+  }
+
+  static void playBgm() {
+    if (_soundEnabled) {
+      try {
+        FlameAudio.bgm.play(AppAssets.bgmAudio, volume: 0.5);
+      } catch (_) {}
+    }
+  }
+
+  static void stopBgm() {
+    try {
+      FlameAudio.bgm.stop();
+    } catch (_) {}
   }
 }

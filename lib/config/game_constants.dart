@@ -17,6 +17,7 @@ class GameConstants {
   // Pendulum swing — real rope physics (#5)
   static const double ropeLength   = 280.0;  // pixels from ceiling anchor to player
   static const double swingDamping = 0.6;    // exponential air-resistance coefficient
+  static const double maxSwingHeight = -50.0; // Prevent infinite upwards swinging
 
   // Web shot arc — gentle gravity on fired webs (#9)
   static const double webArcGravity = 200.0; // pixels/s²

@@ -82,11 +82,11 @@ class _VenomIntroOverlayState extends State<VenomIntroOverlay> with SingleTicker
                         ],
                       ),
                       child: Text(
-                        'WE ARE VENOM',
+                        widget.game.gameState.currentBossTaunt,
                         textAlign: TextAlign.center,
                         style: GoogleFonts.bangers(
                           color: Colors.white,
-                          fontSize: 80,
+                          fontSize: 60,
                           letterSpacing: 4.0,
                           shadows: const [
                             Shadow(offset: Offset(4, 4), color: Color(0xFFFF2F92)), // Magenta shadow

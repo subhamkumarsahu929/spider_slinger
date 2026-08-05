@@ -70,13 +70,14 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/images/sprites/
+    - assets/images/enemies/
     - assets/images/enemies/Fly-Enemy/
     - assets/images/enemies/Little-Enemy/
     - assets/images/enemies/Tall-Enemy/
-    - assets/images/enemies/Venom.png
     - assets/images/environment/
     - assets/images/icon.png
     - assets/images/buildings/
+    - assets/audio/
     - assets/splash.mp4
 
 flutter_launcher_icons:

@@ -10,38 +10,51 @@ class AirborneEnemy extends Enemy {
   final double hoverFrequency = 3.0;
   final double initialY;
 
-  AirborneEnemy({required super.speed, required this.initialY}) 
-      : super(type: EnemyType.airborne, size: Vector2(80, 80));
+  AirborneEnemy({
+    required super.speed,
+    required this.initialY,
+    super.patrolMinX,
+    super.patrolMaxX,
+  }) : super(
+          type: EnemyType.airborne,
+          size: Vector2(48, 48),
+        );
 
   @override
   Future<void> onLoad() async {
-    await super.onLoad();
-    // Tighten hitbox (Sprite is 80x80, real visual is ~40x40 centered)
-    add(CircleHitbox(radius: 20, position: Vector2(20, 20)));
+    SpriteAnimation createAnim(String action, int frames, {bool loop = true}) {
+      return SpriteAnimation.fromFrameData(
+        game.images.fromCache('enemies/Fly-Enemy/Fly-Enemy-$action-Sheet.png'),
+        SpriteAnimationData.sequenced(
+          amount: frames,
+          stepTime: 0.15,
+          textureSize: Vector2(48, 48),
+          loop: loop,
+        ),
+      );
+    }
 
-    const String prefix = 'enemies/Fly-Enemy/Fly-Enemy';
-
-    // Assumed amounts. Adjust if your sprite sheets differ.
     animations = {
-      EnemyState.idle:   createAnim('$prefix-Idle-Sheet.png', amount: 4),
-      EnemyState.walk:   createAnim('$prefix-Idle-Sheet.png', amount: 4), // Airborne — no walk sheet; mirrors idle
-      EnemyState.attack: createAnim('$prefix-Attack-Sheet.png', amount: 4),
-      EnemyState.hit:    createAnim('$prefix-Hit-Sheet.png', amount: 2, loop: false),
-      EnemyState.death:  createAnim('$prefix-Death-Sheet.png', amount: 4, loop: false),
+      EnemyState.idle: createAnim('Idle', 5),
+      EnemyState.walk: createAnim('Idle', 5), // No walk sheet for fly
+      EnemyState.attack: createAnim('Attack', 4),
+      EnemyState.hit: createAnim('Hit', 4, loop: false),
+      EnemyState.death: createAnim('Death', 4, loop: false),
     };
 
-    // Tint Cyan
-    paint.colorFilter = const ColorFilter.mode(Color(0xFF26E0FF), BlendMode.srcIn);
-
-    current = EnemyState.idle;
+    current = EnemyState.walk;
+    add(CircleHitbox(radius: 16, position: Vector2(8, 8)));
   }
 
   @override
   void update(double dt) {
     super.update(dt);
-    if (game.gameState.isGameOver || isDying) return;
+    if (game.gameState.isGameOver) return;
     
-    _time += dt;
-    position.y = initialY + sin(_time * hoverFrequency) * hoverAmplitude;
+    // Hovering sine wave
+    if (current != EnemyState.hit && current != EnemyState.death) {
+      _time += dt;
+      position.y = initialY + sin(_time * hoverFrequency) * hoverAmplitude;
+    }
   }
 }

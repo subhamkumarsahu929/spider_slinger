@@ -50,6 +50,9 @@ class _UserRegistrationOverlayState extends State<UserRegistrationOverlay> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('student_name', name);
       await prefs.setString('roll_number', rollNumber);
+      
+      // Force tutorial to play for fresh registrations (fixes bypass on flutter run --profile)
+      await prefs.setBool('tutorial_completed', false);
 
       _updateGameStateAndProceed(name, rollNumber);
     }

@@ -2,7 +2,7 @@ import 'package:flame/components.dart';
 import 'package:flame/collisions.dart';
 import 'package:flutter/material.dart';
 import '../enemies/enemy.dart';
-import '../enemies/venom_boss.dart';
+import '../enemies/base_boss.dart';
 import '../../spider_slinger_game.dart';
 import '../../../config/game_constants.dart';
 
@@ -67,13 +67,14 @@ class WebShot extends PositionComponent with HasGameReference<SpiderSlingerGame>
       if (!other.isDying) {
         other.hitByWeb(GameConstants.webShotDamage);
         removeFromParent();
+        int multiplier = 1 + game.gameState.loopCount;
         if (other.type == EnemyType.crawler) {
-          game.gameState.addScore(GameConstants.scoreCrawler);
+          game.gameState.addScore(GameConstants.scoreCrawler * multiplier);
         } else {
-          game.gameState.addScore(GameConstants.scoreAirborne);
+          game.gameState.addScore(GameConstants.scoreAirborne * multiplier);
         }
       }
-    } else if (other is VenomBoss) {
+    } else if (other is BaseBoss) {
       if (!other.isDying) {
         other.hitByWeb(GameConstants.webShotDamage);
         removeFromParent();
